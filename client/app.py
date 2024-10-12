@@ -15,7 +15,7 @@ import time
 from flask import Flask, request
 
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk
+from gi.repository import Gtk, GLib
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-app', type=str, required=True)
@@ -32,6 +32,9 @@ class Logger:
         with open(self.log_file, 'w') as f:
             f.write('')
 
+        self.window = None
+        self.progress = ''
+
     def log_to_file(self, message, exception=None):
         if exception:
             print(message, exception)
@@ -39,6 +42,12 @@ class Logger:
             print(message)
         with open(self.log_file, 'a') as f:
             f.write(f"{message}\n")
+
+    def log_progress(self, message):
+        self.progress = message
+        print(message)
+        if self.window:
+            self.window.update_label(message)
 
 logger = Logger(os.path.join(current_path, 'app.log'))
 
@@ -82,18 +91,45 @@ class AppWindow(Gtk.ApplicationWindow):
 
         # Move window to center of the screen
         self.set_position(Gtk.WindowPosition.CENTER)
-        
+
+        # Create a Gtk.Fixed container to overlay the image and label
+        fixed_container = Gtk.Fixed()
+        self.add(fixed_container)
+
+        # Load and add the image
         app_splash = app_config.get('splash')
         image_path = os.path.join(current_path, 'apps', app_splash)
         image = Gtk.Image.new_from_file(image_path)
-        # Add the image to the window
-        self.add(image)
+        fixed_container.put(image, 0, 0)  # Place image at (0, 0)
+
+        # Create the shadow label, this is not ideal but I don't want more complexity
+        self.shadow_label = Gtk.Label()
+        self.shadow_label.set_markup('<span foreground="black" size="large">Your Text Here</span>')  # Shadow color
+        self.shadow_label.set_sensitive(False)  # Make it non-interactive
+        self.shadow_label.set_margin_top(0)
+        self.shadow_label.set_margin_bottom(0)
+
+        # Create the main label and set its properties
+        self.label = Gtk.Label()
+        self.label.set_markup('<span foreground="white" size="large">Your Text Here</span>')  # Main text color
+        self.label.set_sensitive(False)  # Make it non-interactive
+        self.label.set_margin_top(0)
+        self.label.set_margin_bottom(0)
+
+        # Overlay the labels at the bottom left corner of the image
+        fixed_container.put(self.shadow_label, 15, 415)  # Position for shadow label
+        fixed_container.put(self.label, 15, 415)  # Position for main label
 
         self.connect("destroy", self.on_destroy)  # Close the window when the 'X' button is clicked
 
     def on_destroy(self, *args):
         print("Destroying window...")
-        Gtk.main_quit() # Quit the GTK main loop
+        Gtk.main_quit()  # Quit the GTK main loop
+
+    def update_label(self, new_text):
+        # Use GLib.idle_add to ensure thread-safe updates to the labels
+        GLib.idle_add(self.label.set_markup, f'<span foreground="white" size="large">{new_text}</span>')
+        GLib.idle_add(self.shadow_label.set_markup, f'<span foreground="black" size="large">{new_text}</span>')
 
 # Gtk application
 class Application(Gtk.Application):
@@ -116,6 +152,8 @@ class Application(Gtk.Application):
             harmony_app.window = self.window
             harmony_thread = threading.Thread(target=harmony_app.run)
             harmony_thread.start()
+
+            logger.window = self.window
 
         self.window.show_all()
         self.window.present()
@@ -394,26 +432,33 @@ class HarmonyApp():
             for vm in running_vms:
                 # Only hibernate the VMs listed in gpu-vms.json
                 if vm in self.vms_config and vm != self.app_vm:
+                    logger.log_progress(f"HIBERNATING...")
                     logger.log_to_file(f'[HarmonyApp] [Info] Hibernating {vm}...')
                     self.hibernate_vm(vm)
                     self.wait_for_vm_hibernate(vm)
-
+        
+        logger.log_progress(f"REMOVING USB DEVICES...")
         logger.log_to_file(f'[HarmonyApp] [Info] Removing hostdev entries from {self.app_vm} VM...')
         xml_file = "/tmp/libvirt_harmony.xml"
         self.remove_hostdev_entries(self.app_vm, xml_file)
 
+        logger.log_progress(f"ADDING USB DEVICES...")
         logger.log_to_file(f'[HarmonyApp] [Info] Adding hostdev entries to {self.app_vm} VM...')
         self.add_hostdev_entries(self.app_vm, xml_file)
 
+        logger.log_progress(f"DEFINING...")
         logger.log_to_file(f'[HarmonyApp] [Info] Defining VM {self.app_vm}...')
         self.define_vm(self.app_vm, xml_file)
 
+        logger.log_progress(f"STARTING VM...")
         logger.log_to_file(f'[HarmonyApp] [Info] Starting VM {self.app_vm}...')
         self.start_vm(self.app_vm)
 
+        logger.log_progress(f"STARTING APP...")
         logger.log_to_file(f'[HarmonyApp] [Info] Starting app {app_name}...')
         self.start_app(self.app_vm)
 
+        logger.log_progress(f"WAITING...")
         logger.log_to_file(f'[HarmonyApp] [Info] Starting Flask listener...') 
         listener = HarmonyListener(__name__)
 
@@ -421,6 +466,7 @@ class HarmonyApp():
         listener_thread.start()
         
         listener.shutdown_event.wait()
+        logger.log_progress(f"LAUNCHING...")
         logger.log_to_file("[HarmonyApp] [Info] Shutting down Flask listener...")
 
         # Close the splash screen
