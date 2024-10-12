@@ -1,0 +1,22 @@
+{
+    "vm": "win10-games",
+    "name": "7 Days To Die",
+    "splash": "7dtd.png",
+    "mainexe": "7DaysToDie.exe",
+    "alwaysontop": false,
+    "exes": [
+        "7DaysToDie.exe",
+        "7DaysToDie_EAC.exe",
+        "7dLauncher.exe"
+    ],
+    "killexes": [
+        "explorer.exe",
+        "taskmgr.exe"
+    ],
+    "usb_devices": [
+        ""
+    ],
+    "command": "steam://rungameid/251570",
+    "timeout": 300
+  }
+  

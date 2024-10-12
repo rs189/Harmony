@@ -1,0 +1,23 @@
+{
+    "vm": "win10-vr",
+    "name": "VRChat",
+    "splash": "vrchat.png",
+    "mainexe": "VRChat.exe",
+    "alwaysontop": false,
+    "exes": [
+        "VRChat.exe"
+    ],
+    "killexes": [
+        "taskmgr.exe"
+    ],
+    "usb_devices": [
+        "Valve Software Index HMD",
+        "Valve Software Watchman Dongle",
+        "Valve Software Valve VR Radio",
+        "Valve Software Valve VR Radio & HMD Mic",
+        "Valve Software 3D Camera"
+    ],
+    "command": "steam://rungameid/438100",
+    "timeout": 300
+  }
+  

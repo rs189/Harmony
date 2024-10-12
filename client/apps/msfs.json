@@ -1,0 +1,20 @@
+{
+    "vm": "win10-games",
+    "name": "Microsoft Flight Simulator",
+    "splash": "msfs.png",
+    "mainexe": "FlightSimulator.exe",
+    "alwaysontop": true,
+    "exes": [
+        "FlightSimulator.exe"
+    ],
+    "killexes": [
+        "explorer.exe",
+        "taskmgr.exe"
+    ],
+    "usb_devices": [
+        ""
+    ],
+    "command": "steam://rungameid/1250410",
+    "timeout": 300
+  }
+  
