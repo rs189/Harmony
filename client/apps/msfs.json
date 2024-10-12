@@ -9,7 +9,8 @@
     ],
     "killexes": [
         "explorer.exe",
-        "taskmgr.exe"
+        "taskmgr.exe",
+        "steamwebhelper.exe"
     ],
     "usb_devices": [
         ""

@@ -1,19 +1,18 @@
 import argparse
+import _thread
 import gi
 import json
 import os
 import re
 import requests
-from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util.retry import Retry
 import subprocess
 import sys
 import threading
-import _thread
 import time
 
 from flask import Flask, request
-
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, GLib
 
@@ -21,11 +20,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-app', type=str, required=True)
 args = parser.parse_args()
 
-# Get current path
 current_path = os.path.dirname(os.path.realpath(__file__))
-print(f"Current path: {current_path}")
 
-# Logger class
 class Logger:
     def __init__(self, log_file):
         self.log_file = log_file
@@ -62,75 +58,58 @@ with open(app_json_path, 'r') as f:
 
 app_name = app_config.get('name')
 
-# Integrity check, make sure no other Python process is running for the same app
-def check_running_processes():
-    logger.log_to_file(f"Checking for running processes...")
-    try:
-        # List all running processes
-        processes = subprocess.check_output(['ps', 'aux'], text=True).splitlines()
-        current_pid = os.getpid() # Get the current process ID
-        for process in processes:
-            if 'python' in process and 'app.py' in process:
-                logger.log_to_file(f"Found process: {process}")
-
-                # Extract the PID
-                pid = int(process.split()[1])
-
-                # If the found PID is not the current process, kill it
-                if pid != current_pid:
-                    logger.log_to_file(f"Killing process with PID {pid}...")
-                    subprocess.run(['kill', str(pid)])  # Ensure PID is passed as a string
-
-    except subprocess.CalledProcessError as e:
-        logger.log_to_file(f"Error checking running processes: {e}")
+# Harmony configuration file
+harmony_config_path = os.path.join(os.path.dirname(__file__), 'harmony.json')
+if not os.path.exists(harmony_config_path):
+    logger.log_to_file("Harmony configuration file not found.")
+    sys.exit(1)
+with open(harmony_config_path, 'r') as f:
+    harmony_config = json.load(f)
 
 # Gtk application window
 class AppWindow(Gtk.ApplicationWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.set_default_size(400, 300)  # Set default window size
 
-        # Move window to center of the screen
+        self.set_default_size(800, 450)
         self.set_position(Gtk.WindowPosition.CENTER)
 
         # Create a Gtk.Fixed container to overlay the image and label
         fixed_container = Gtk.Fixed()
         self.add(fixed_container)
 
-        # Load and add the image
+        # Load and add the splash image
         app_splash = app_config.get('splash')
         image_path = os.path.join(current_path, 'apps', app_splash)
         image = Gtk.Image.new_from_file(image_path)
         fixed_container.put(image, 0, 0)  # Place image at (0, 0)
 
-        # Create the shadow label, this is not ideal but I don't want more complexity
+        # Create the shadow label, this is not ideal
         self.shadow_label = Gtk.Label()
-        self.shadow_label.set_markup('<span foreground="black" size="large">Your Text Here</span>')  # Shadow color
-        self.shadow_label.set_sensitive(False)  # Make it non-interactive
+        self.shadow_label.set_markup('<span foreground="black" size="large"></span>')
+        self.shadow_label.set_sensitive(False)
         self.shadow_label.set_margin_top(0)
         self.shadow_label.set_margin_bottom(0)
 
-        # Create the main label and set its properties
+        # Create the main label
         self.label = Gtk.Label()
-        self.label.set_markup('<span foreground="white" size="large">Your Text Here</span>')  # Main text color
-        self.label.set_sensitive(False)  # Make it non-interactive
+        self.label.set_markup('<span foreground="white" size="large"></span>')
+        self.label.set_sensitive(False)
         self.label.set_margin_top(0)
         self.label.set_margin_bottom(0)
 
         # Overlay the labels at the bottom left corner of the image
-        fixed_container.put(self.shadow_label, 15, 415)  # Position for shadow label
-        fixed_container.put(self.label, 15, 415)  # Position for main label
+        fixed_container.put(self.shadow_label, 15, 415)
+        fixed_container.put(self.label, 15, 415)
 
         self.lg_ready = False
 
-        self.connect("destroy", self.on_destroy)  # Close the window when the 'X' button is clicked
+        self.connect("destroy", self.on_destroy)
 
     def on_destroy(self, *args):
         print("Destroying window...")
         if not self.lg_ready:
-            # Get current pid
             current_pid = os.getpid()
-            # Kill the current process
             subprocess.run(['kill', str(current_pid)])
         Gtk.main_quit()  # Quit the GTK main loop
         
@@ -138,6 +117,8 @@ class AppWindow(Gtk.ApplicationWindow):
         # Use GLib.idle_add to ensure thread-safe updates to the labels
         GLib.idle_add(self.label.set_markup, f'<span foreground="white" size="large">{new_text}</span>')
         GLib.idle_add(self.shadow_label.set_markup, f'<span foreground="black" size="large">{new_text}</span>')
+
+app_name = app_config.get('name')
 
 # Gtk application
 class Application(Gtk.Application):
@@ -388,9 +369,7 @@ class HarmonyApp():
                 with open(os.path.join(apps_path, file), 'r') as f:
                     other_app_config = json.load(f)
                     other_mainexe = other_app_config.get('mainexe')
-                    print(self.killexes)
                     self.killexes += f' "{other_mainexe}"'
-                    print(f"Added {other_mainexe}...")
 
         app_command = f'python ../app.py -app {self.command} -mainexe {self.mainexe} -alwaysontop {self.alwaysontop} -exes {self.exes} -killexes {self.killexes} -delay {self.delay}'
         try:
@@ -405,10 +384,17 @@ class HarmonyApp():
             sys.exit    
 
     def start_lg(self):
-        os.environ["GDK_BACKEND"] = "wayland"
+        lg_gdk_backend = harmony_config.get('looking-glass-gdk-backend')
+        os.environ["GDK_BACKEND"] = lg_gdk_backend
+
+        lg_path = harmony_config.get('looking-glass-path')
+        if not lg_path:
+            logger.log_to_file(f"[HarmonyApp] [Error] Looking Glass path not found.")
+            sys.exit(1)
+        lg_path = os.path.expanduser(lg_path)
 
         lg_command = [
-            '/home/russell/Documents/GitHub/LookingGlass/client/build/looking-glass-client',
+            lg_path,
             'audio:micShowIndicator=no',
             'audio:micDefault=allow',
             'spice:port=5905',
@@ -490,7 +476,19 @@ class HarmonyApp():
         sys.exit(1)
 
 if __name__ == "__main__":
-    check_running_processes()
+    logger.log_to_file(f"Checking for running processes...")
+    try:
+        processes = subprocess.check_output(['ps', 'aux'], text=True).splitlines()
+        for process in processes:
+            if 'python' in process and 'app.py' in process:
+                logger.log_to_file(f"Found process: {process}")
+                pid = int(process.split()[1])
+                current_pid = os.getpid()
+                if pid != current_pid:
+                    logger.log_to_file(f"Killing process with PID {pid}...")
+                    subprocess.run(['kill', str(pid)])
+    except subprocess.CalledProcessError as e:
+        logger.log_to_file(f"Error checking running processes: {e}")
 
     app = Application()
     app.run(None)
