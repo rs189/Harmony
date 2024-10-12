@@ -15,6 +15,7 @@
         ""
     ],
     "command": "steam://rungameid/1250410",
+    "delay": 2,
     "timeout": 300
   }
   

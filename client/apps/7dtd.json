@@ -3,7 +3,7 @@
     "name": "7 Days To Die",
     "splash": "7dtd.png",
     "mainexe": "7DaysToDie.exe",
-    "alwaysontop": false,
+    "alwaysontop": true,
     "exes": [
         "7DaysToDie.exe",
         "7DaysToDie_EAC.exe",
@@ -17,6 +17,7 @@
         ""
     ],
     "command": "steam://rungameid/251570",
+    "delay": 0,
     "timeout": 300
   }
   

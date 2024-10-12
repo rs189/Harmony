@@ -64,13 +64,13 @@ app_name = app_config.get('name')
 
 # Integrity check, make sure no other Python process is running for the same app
 def check_running_processes():
-    logger.log_to_file(f"Checking for running processes of {args.app}...")
+    logger.log_to_file(f"Checking for running processes...")
     try:
         # List all running processes
         processes = subprocess.check_output(['ps', 'aux'], text=True).splitlines()
         current_pid = os.getpid() # Get the current process ID
         for process in processes:
-            if 'python' in process and 'app.py' in process and args.app in process:
+            if 'python' in process and 'app.py' in process:
                 logger.log_to_file(f"Found process: {process}")
 
                 # Extract the PID
@@ -121,12 +121,19 @@ class AppWindow(Gtk.ApplicationWindow):
         fixed_container.put(self.shadow_label, 15, 415)  # Position for shadow label
         fixed_container.put(self.label, 15, 415)  # Position for main label
 
+        self.lg_ready = False
+
         self.connect("destroy", self.on_destroy)  # Close the window when the 'X' button is clicked
 
     def on_destroy(self, *args):
         print("Destroying window...")
+        if not self.lg_ready:
+            # Get current pid
+            current_pid = os.getpid()
+            # Kill the current process
+            subprocess.run(['kill', str(current_pid)])
         Gtk.main_quit()  # Quit the GTK main loop
-
+        
     def update_label(self, new_text):
         # Use GLib.idle_add to ensure thread-safe updates to the labels
         GLib.idle_add(self.label.set_markup, f'<span foreground="white" size="large">{new_text}</span>')
@@ -193,6 +200,8 @@ class HarmonyApp():
         self.usb_devices = app_config.get('usb_devices', [])
 
         self.command = app_config.get('command')
+
+        self.delay = app_config.get('delay', 0)
 
         # List of other VMs that use the GPU
         self.gpu_vms_path = os.path.join(os.path.dirname(__file__), 'gpu-vms.json')
@@ -383,7 +392,7 @@ class HarmonyApp():
                     self.killexes += f' "{other_mainexe}"'
                     print(f"Added {other_mainexe}...")
 
-        app_command = f'python ../app.py -app {self.command} -mainexe {self.mainexe} -alwaysontop {self.alwaysontop} -exes {self.exes} -killexes {self.killexes}'
+        app_command = f'python ../app.py -app {self.command} -mainexe {self.mainexe} -alwaysontop {self.alwaysontop} -exes {self.exes} -killexes {self.killexes} -delay {self.delay}'
         try:
             #response = requests.post(url, data={'command': app_command}, timeout=10)
             response = self.requests_retry_session().post(url, data={'command': app_command}, timeout=10)
@@ -473,6 +482,7 @@ class HarmonyApp():
         # Close the splash screen
         if self.window:
             logger.log_to_file(f"[HarmonyApp] [Info] Destroying splash screen window...")
+            self.window.lg_ready = True
             self.window.destroy()
 
         logger.log_to_file(f'[HarmonyApp] [Info] Launching Looking Glass...')
