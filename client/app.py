@@ -64,24 +64,25 @@ app_name = app_config.get('name')
 
 # Integrity check, make sure no other Python process is running for the same app
 def check_running_processes():
+    logger.log_to_file(f"Checking for running processes of {args.app}...")
     try:
         # List all running processes
         processes = subprocess.check_output(['ps', 'aux'], text=True).splitlines()
         current_pid = os.getpid() # Get the current process ID
         for process in processes:
             if 'python' in process and 'app.py' in process and args.app in process:
-                print(f"Process found: {process}")
+                logger.log_to_file(f"Found process: {process}")
 
                 # Extract the PID
                 pid = int(process.split()[1])
 
                 # If the found PID is not the current process, kill it
                 if pid != current_pid:
-                    print(f"Killing process with PID {pid}")
+                    logger.log_to_file(f"Killing process with PID {pid}...")
                     subprocess.run(['kill', str(pid)])  # Ensure PID is passed as a string
 
     except subprocess.CalledProcessError as e:
-        print(f"Error fetching process list: {e}")
+        logger.log_to_file(f"Error checking running processes: {e}")
 
 # Gtk application window
 class AppWindow(Gtk.ApplicationWindow):
