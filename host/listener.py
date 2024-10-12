@@ -1,6 +1,9 @@
+import json
+import os
 import subprocess
 import threading
 import time
+
 from flask import Flask, request
 
 # Harmony configuration file
@@ -37,6 +40,6 @@ class HarmonyListener(Flask):
             return 'No command provided.'
 
 if __name__ == '__main__':
-    app = Flask(__name__)
+    listener = HarmonyListener(__name__)
     harmony_port = int(harmony_config.get('port', 5000))
-    app.run(host='0.0.0.0', port=harmony_port)
+    listener.run(host='0.0.0.0', port=harmony_port)
