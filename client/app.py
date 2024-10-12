@@ -161,7 +161,8 @@ class HarmonyListener(Flask):
             return 'Host is ready.'
 
 def start_harmony_listener(listener):
-    listener.run(host='0.0.0.0', port=5000)
+    harmony_port = int(harmony_config.get('port', 5000))
+    listener.run(host='0.0.0.0', port=harmony_port)
 
 # Harmony application
 class HarmonyApp():
