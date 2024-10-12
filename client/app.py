@@ -133,8 +133,8 @@ class HarmonyListener(Flask):
             self.shutdown_event.set()
             return 'Host is ready.'
 
-#def start_harmony_listener(listener):
-#    listener.run(host='0.0.0.0', port=5000)
+def start_harmony_listener(listener):
+    listener.run(host='0.0.0.0', port=5000)
 
 # Harmony application
 class HarmonyApp():
@@ -227,7 +227,7 @@ class HarmonyApp():
         url = 'http://' + ip_address + ':5000/execute'
         try:
             #response = requests.post(url, data={'command': 'python hibernate.py'}, timeout=10)
-            response = self.requests_retry_session().post(url, data={'command': 'python hibernate.py'}, timeout=10)
+            response = self.requests_retry_session().post(url, data={'command': 'python ../hibernate.py'}, timeout=10)
             logger.log_to_file(f'[HarmonyApp] [Info] Start app {app_name} response from server: {response.text}')
         except requests.exceptions.Timeout:
             logger.log_to_file(f'[HarmonyApp] [Error] Request timed out trying to hibernate VM {vm_name}')
@@ -344,7 +344,7 @@ class HarmonyApp():
                     self.killexes += f' "{other_mainexe}"'
                     print(f"Added {other_mainexe}...")
 
-        app_command = f'python app.py -app {self.command} -mainexe {self.mainexe} -alwaysontop {self.alwaysontop} -exes {self.exes} -killexes {self.killexes}'
+        app_command = f'python ../app.py -app {self.command} -mainexe {self.mainexe} -alwaysontop {self.alwaysontop} -exes {self.exes} -killexes {self.killexes}'
         try:
             #response = requests.post(url, data={'command': app_command}, timeout=10)
             response = self.requests_retry_session().post(url, data={'command': app_command}, timeout=10)
@@ -417,7 +417,7 @@ class HarmonyApp():
         logger.log_to_file(f'[HarmonyApp] [Info] Starting Flask listener...') 
         listener = HarmonyListener(__name__)
 
-        listener_thread = threading.Thread(target=listener.run(host='0.0.0.0', port=5000), args=(listener,))
+        listener_thread = threading.Thread(target=start_harmony_listener, args=(listener,))
         listener_thread.start()
         
         listener.shutdown_event.wait()
