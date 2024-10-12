@@ -10,7 +10,9 @@
     "killexes": [
         "explorer.exe",
         "taskmgr.exe",
-        "steamwebhelper.exe"
+        "steamwebhelper.exe",
+        "msedge.exe",
+        "msedgewebview2.exe"
     ],
     "usb_devices": [
         ""
