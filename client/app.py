@@ -10,7 +10,10 @@ import sys
 import threading
 import time
 
+from common import HarmonyAppCommon
 from flask import Flask, request
+from hibernate import HarmonyAppHibernate
+from logger import Logger
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 gi.require_version('Gtk', '3.0')
@@ -21,29 +24,6 @@ parser.add_argument('-app', type=str, required=True)
 args = parser.parse_args()
 
 current_path = os.path.dirname(os.path.realpath(__file__))
-
-class Logger:
-    def __init__(self, log_file):
-        self.log_file = log_file
-        with open(self.log_file, 'w') as f:
-            f.write('')
-
-        self.window = None
-        self.progress = ''
-
-    def log_to_file(self, message, exception=None):
-        if exception:
-            print(message, exception)
-        else:
-            print(message)
-        with open(self.log_file, 'a') as f:
-            f.write(f"{message}\n")
-
-    def log_progress(self, message):
-        self.progress = message
-        print(message)
-        if self.window:
-            self.window.update_label(message)
 
 logger = Logger(os.path.join(current_path, 'app.log'))
 
@@ -194,18 +174,13 @@ class HarmonyApp():
             self.gpu_vms_config = json.load(f)
         self.vms_config = self.gpu_vms_config.get("vms", [])
 
-    def get_running_vms(self):
-        vms = subprocess.check_output(['virsh', 'list', '--name', '--state-running']).decode('utf-8').splitlines()
-        return [vm.strip() for vm in vms if vm.strip()]
-
-    def is_vm_running(self, vm_name):
-        running_vms = self.get_running_vms()
-        return vm_name in running_vms
+        self.common = HarmonyAppCommon()
+        self.hibernate = HarmonyAppHibernate()
 
     def wait_for_vm_start(self, vm_name, timeout=500):
         elapsed = 0
         interval = 1
-        while not self.is_vm_running(vm_name):
+        while not self.common.is_vm_running(vm_name):
             if elapsed >= timeout:
                 logger.log_to_file(f'[HarmonyApp] [Error] Timeout: VM {vm_name} did not start in time.')
                 sys.exit(1)
@@ -213,70 +188,6 @@ class HarmonyApp():
             time.sleep(interval)
             elapsed += interval
         logger.log_to_file(f'[HarmonyApp] [Info] VM {vm_name} is now running.')
-
-    def get_vm_ip(self, vm_name, timeout=500):
-        elapsed = 0
-        interval = 1
-        while elapsed < timeout:
-            virsh_output = subprocess.check_output(['virsh', 'domifaddr', vm_name]).decode('utf-8')
-            pattern = r'(\d{1,3}(?:\.\d{1,3}){3})'
-            match = re.search(pattern, virsh_output)
-            ip_address = match.group(1) if match else None
-            if ip_address:
-                return ip_address
-            time.sleep(interval)
-            elapsed += interval
-        logger.log_to_file(f'[HarmonyApp] [Error] No IP address found for the target VM {vm_name}.')
-        sys.exit(1)
-
-    def requests_retry_session(self,
-        retries=3,
-        backoff_factor=0.3,
-        status_forcelist=(500, 502, 504),
-        session=None,
-    ):
-        session = session or requests.Session()
-        
-        retry = Retry(
-            total=retries,
-            read=retries,
-            connect=retries,
-            backoff_factor=backoff_factor,
-            status_forcelist=status_forcelist,
-        )
-        adapter = HTTPAdapter(max_retries=retry)
-        session.mount('http://', adapter)
-        session.mount('https://', adapter)
-        return session
-
-    def hibernate_vm(self, vm_name):
-        ip_address = self.get_vm_ip(vm_name)
-        if not ip_address:
-            logger.log_to_file(f'[HarmonyApp] [Error] No IP address found for the target VM {vm_name}.')
-            sys.exit(1)
-        url = 'http://' + ip_address + ':5000/execute'
-        try:
-            #response = requests.post(url, data={'command': 'python hibernate.py'}, timeout=10)
-            response = self.requests_retry_session().post(url, data={'command': 'python ../hibernate.py'}, timeout=10)
-            logger.log_to_file(f'[HarmonyApp] [Info] Start app {app_name} response from server: {response.text}')
-        except requests.exceptions.Timeout:
-            logger.log_to_file(f'[HarmonyApp] [Error] Request timed out trying to hibernate VM {vm_name}')
-            sys.exit(1)
-        except requests.exceptions.RequestException as e:
-            logger.log_to_file(f'[HarmonyApp] [Error] Exception trying to hibernate VM {vm_name} ', e)
-            sys.exit(1)
-
-    def wait_for_vm_hibernate(self, vm_name, timeout=500):
-        elapsed = 0
-        interval = 1
-        while self.is_vm_running(vm_name):
-            if elapsed >= timeout:
-                logger.log_to_file(f"[HarmonyApp] [Error] Timeout: VM {vm_name} did not hibernate in time.")
-                sys.exit(1)
-            logger.log_to_file(f"[HarmonyApp] [Info] Waiting for VM {vm_name} to hibernate...")
-            time.sleep(interval)
-            elapsed += interval
-        logger.log_to_file(f"[HarmonyApp] [Info] VM {vm_name} has successfully hibernated.")
 
     def remove_hostdev_entries(self, vm_name, xml_file):
         with open(xml_file, 'w') as file:
@@ -351,14 +262,14 @@ class HarmonyApp():
         interval = 1
         while elapsed < timeout:
             subprocess.run(['virsh', 'start', vm_name])
-            if self.is_vm_running(vm_name):
+            if self.common.is_vm_running(vm_name):
                 logger.log_to_file(f'[HarmonyApp] [Info] Started VM {vm_name}.')
                 return
             time.sleep(interval)
             elapsed += interval
 
     def start_app(self, vm_name):
-        ip_address = self.get_vm_ip(self.app_vm)
+        ip_address = self.common.get_vm_ip(self.app_vm)
         if not ip_address:
             logger.log_to_file(f'[HarmonyApp] [Error] No IP address found for the target VM {self.app_vm}.')
             sys.exit(1)
@@ -372,10 +283,10 @@ class HarmonyApp():
                     other_mainexe = other_app_config.get('mainexe')
                     self.killexes += f' "{other_mainexe}"'
 
-        app_command = f'python ../app.py -app {self.command} -mainexe {self.mainexe} -alwaysontop {self.alwaysontop} -exes {self.exes} -killexes {self.killexes} -delay {self.delay}'
+        app_command = f'python_admin.exe ../app.py -app {self.command} -mainexe {self.mainexe} -alwaysontop {self.alwaysontop} -exes {self.exes} -killexes {self.killexes} -delay {self.delay}'
         try:
             #response = requests.post(url, data={'command': app_command}, timeout=10)
-            response = self.requests_retry_session().post(url, data={'command': app_command}, timeout=10)
+            response = self.common.requests_retry_session().post(url, data={'command': app_command}, timeout=10)
             logger.log_to_file(f'[HarmonyApp] [Info] Start app {app_name} response from server: ', response.text)
         except requests.exceptions.Timeout:
             logger.log_to_file(f'[HarmonyApp] [Error] Request timed out trying to start app {app_name}')
@@ -394,18 +305,11 @@ class HarmonyApp():
             sys.exit(1)
         lg_path = os.path.expanduser(lg_path)
 
-        lg_command = [
-            lg_path,
-            'audio:micShowIndicator=no',
-            'audio:micDefault=allow',
-            'spice:port=5905',
-            'wayland:warpSupport=no',
-            'win:quickSplash=yes',
-            'win:jitRender=yes',
-            'spice:captureOnStart=yes',
-            'input:captureOnFocus=yes',
-            'input:grabKeyboard=no',
-        ]
+        lg_command = [lg_path]
+        lg_command.append(f'spice:port={int(harmony_config.get('looking-glass-port'))}')
+        lg_args = harmony_config.get('looking-glass-args', [])
+        for lg_arg in lg_args:
+            lg_command.append(lg_arg)
         lg_command.append(f'win:title={app_name}')
         app_id = f"com.harmony.{args.app}"
         app_id = re.sub(r'\d+', lambda x: f'_{x.group()}', app_id)
@@ -424,7 +328,7 @@ class HarmonyApp():
             sys.exit(1)
 
     def run(self):
-        running_vms = self.get_running_vms()
+        running_vms = self.common.get_running_vms()
         if self.app_vm not in running_vms:
             for vm in running_vms:
                 # Only hibernate the VMs listed in gpu-vms.json
@@ -432,7 +336,7 @@ class HarmonyApp():
                     logger.log_progress(f"HIBERNATING...")
                     logger.log_to_file(f'[HarmonyApp] [Info] Hibernating {vm}...')
                     self.hibernate_vm(vm)
-                    self.wait_for_vm_hibernate(vm)
+                    self.hibernate.wait_for_vm_hibernate(vm)
         
         logger.log_progress(f"REMOVING USB DEVICES...")
         logger.log_to_file(f'[HarmonyApp] [Info] Removing hostdev entries from {self.app_vm} VM...')

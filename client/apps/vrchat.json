@@ -13,11 +13,13 @@
     "usb_devices": [
         "Valve Software Index HMD",
         "Valve Software Watchman Dongle",
+        "Valve Software Valve VR Dongle",
         "Valve Software Valve VR Radio",
         "Valve Software Valve VR Radio & HMD Mic",
         "Valve Software 3D Camera"
     ],
     "command": "steam://rungameid/438100",
+    "delay": 2,
     "timeout": 300
   }
   

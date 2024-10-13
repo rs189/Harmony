@@ -10,12 +10,11 @@
     "killexes": [
         "explorer.exe",
         "taskmgr.exe",
-        "steamwebhelper.exe",
         "msedge.exe",
         "msedgewebview2.exe"
     ],
     "usb_devices": [
-        ""
+        "Saitek PLC Saitek X52 PRO Flight Control System"
     ],
     "command": "steam://rungameid/1250410",
     "delay": 2,
