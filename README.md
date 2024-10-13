@@ -1,7 +1,7 @@
 # Harmony
  A looking-glass and libvirt integration for launching Windows applications with a native form factor.
 
-![](https://img.youtube.com/vi/MWZ3jt53io8/maxresdefault.jpg)(https://youtu.be/MWZ3jt53io8)
+[![Video](https://img.youtube.com/vi/MWZ3jt53io8/maxresdefault.jpg)](https://youtu.be/MWZ3jt53io8)
 
 # It is recommended to have a separate VM and Windows install when using Harmony as it is not designed to be used outside this project's scope.
 
