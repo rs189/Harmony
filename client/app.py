@@ -140,6 +140,20 @@ class HarmonyListener(Flask):
             self.shutdown_event.set()
             return 'Host is ready.'
 
+        @self.route('/terminate', methods=['GET'])
+        def host_terminate():
+            logger.log_to_file(f"[HarmonyListener] [Info] Host sent terminate.")  
+            
+            result = subprocess.run(['pkill', '-f', 'looking-glass-client'])
+            if result.returncode == 0:
+                logger.log_to_file(f"[HarmonyListener] [Info] Successfully terminated Looking Glass process.")
+            else:
+                logger.log_to_file(f"[HarmonyListener] [Error] Failed to terminate Looking Glass process.")
+    
+            current_pid = os.getpid()
+            subprocess.run(['kill', str(current_pid)])
+            return 'Host sent terminate.'
+
 def start_harmony_listener(listener):
     harmony_port = int(harmony_config.get('port', 5000))
     listener.run(host='0.0.0.0', port=harmony_port)
@@ -317,6 +331,9 @@ class HarmonyApp():
         try:
             # Launch Looking Glass using Popen and monitor the process
             process = subprocess.Popen(lg_command)
+
+            listener_thread = threading.Thread(target=start_harmony_listener, args=(listener,))
+            listener_thread.start()
 
             # Wait for the process to terminate
             process.wait()

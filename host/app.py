@@ -100,22 +100,25 @@ class HarmonyHost():
         except Exception as e:
             logger.log_to_file(f'[HarmonyHost] [Error] Failed to bring window to foreground: {e}')
         
-        # Optionally, ensure the window is topmost for visibility
-        win32gui.SetWindowPos(
-            hwnd,
-            win32con.HWND_TOPMOST, # Bring to the top of the Z-order
-            0, 0, 0, 0,
-            win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_SHOWWINDOW
-        )
-    
-        if args.alwaysontop.lower() != 'true':
-            # Set the window to be topmost, so it remains above other windows
+        try:
+            # Optionally, ensure the window is topmost for visibility
             win32gui.SetWindowPos(
                 hwnd,
-                win32con.HWND_NOTOPMOST,
+                win32con.HWND_TOPMOST, # Bring to the top of the Z-order
                 0, 0, 0, 0,
                 win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_SHOWWINDOW
             )
+
+            if args.alwaysontop.lower() != 'true':
+                # Set the window to be topmost, so it remains above other windows
+                win32gui.SetWindowPos(
+                    hwnd,
+                    win32con.HWND_NOTOPMOST,
+                    0, 0, 0, 0,
+                    win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_SHOWWINDOW
+                )
+        except Exception as e:
+            logger.log_to_file(f'[HarmonyHost] [Error] Failed to bring window to foreground: {e}')
 
     def wait_host_ready(self):
         # Wait for the main application to start
@@ -173,10 +176,38 @@ class HarmonyHost():
         logger.log_to_file(f"[HarmonyHost] [Info] Sending the ready signal after {delay} seconds...")
         time.sleep(delay)
 
+        if self.are_processes_running(args.exes):
+            hwnd = self.find_hwnd_from_process(args.mainexe)
+            if hwnd:
+                logger.log_to_file(f"[HarmonyHost] [Info] Bringing window to foreground: {args.mainexe}")
+                self.bring_hwnd_to_foreground(hwnd)
+
         host_ip = harmony_config.get('host-ip')
         host_port = harmony_config.get('host-port')
         request_address = 'http://' + host_ip + ':' + str(host_port) + '/ready'
-        response = requests.get(request_address)
+        try:
+            response = requests.get(request_address)
+        except Exception as e:
+            logger.log_to_file(f"[HarmonyHost] [Error] Failed sending the ready signal: {e}")
+            sys.exit(1)
+
+        # Monitor the process 
+        time.sleep(5)
+        wait_for_eac = harmony_config.get('monitor-process')
+        if str(wait_for_eac).lower() == 'true':
+            monitor_interval = 0.5
+            while self.are_processes_running([args.mainexe]):
+                time.sleep(monitor_interval)
+            logger.log_to_file(f"[HarmonyHost] [Info] Sending the termination signal.")
+            request_address = 'http://' + host_ip + ':' + str(host_port) + '/terminate'
+            try:
+                response = requests.get(request_address)
+                sys.exit(1)
+                return
+            except Exception as e:
+                sys.exit(1)
+                return
+        sys.exit(1)
 
     def run(self):
         if not self.are_processes_running(args.exes):
@@ -249,9 +280,7 @@ class HarmonyHost():
             if hwnd:
                 logger.log_to_file(f"[HarmonyHost] [Info] Bringing window to foreground: {args.mainexe}")
                 self.bring_hwnd_to_foreground(hwnd)
-                self.bring_hwnd_to_foreground(hwnd)
             self.wait_host_ready()
-            sys.exit(1)
 
         logger.log_to_file(f"[HarmonyHost] [Error] Launching application.")
         self.wait_host_ready()

@@ -11,5 +11,6 @@
         "steamservice.exe",
         "steamwebhelper.exe"
     ],
-    "wait-for-easy-anti-cheat": true
+    "wait-for-easy-anti-cheat": true,
+    "monitor-process": true
 }
