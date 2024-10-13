@@ -14,7 +14,7 @@
 ## Installation
 
 1. Copy the client folder into a desired location on the host; copy the host folder into a desired location on the guest (`C:\Program Files\Harmony Host` by default).
-2. Install or copy Python 3.10+ into a folder called python inside the host installation location (`C:\Program Files\Harmony Host\python` by default).
+2. Install or copy Python 3.10+ into a folder called `python` inside the host installation location (`C:\Program Files\Harmony Host\python` by default).
 3. Install the requirements listed in the `requirements.txt` by running `pip install -r requirements.txt` or `python -m pip install -r requirements.txt` on both the host and the guest.
 4. Configure the `harmony.json` file to match your setup on both the host and the guest; keep in mind that your `looking-glass-port` would be `5900` and not `5905` unless configured otherwise.
 5. Configure the `gpu-vms.json` of the client, specifying the domain names for your libvirt virtual machines.
