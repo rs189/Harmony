@@ -27,7 +27,7 @@ class HarmonyAppHibernate():
         url = 'http://' + ip_address + ':5000/execute'
         try:
             #response = requests.post(url, data={'command': 'python hibernate.py'}, timeout=10)
-            response = self.common.requests_retry_session().post(url, data={'command': 'python_admin.exe ../hibernate.py'}, timeout=10)
+            response = self.common.requests_retry_session().post(url, data={'command': 'python.exe ../hibernate.py'}, timeout=10)
             logger.log_to_file(f'[HarmonyAppHibernate] [Info] Hibernate VM {vm_name} response from server: {response.text}')
         except requests.exceptions.Timeout:
             logger.log_to_file(f'[HarmonyAppHibernate] [Error] Request timed out trying to hibernate VM {vm_name}')
