@@ -1,6 +1,8 @@
 # Harmony
  A looking-glass and libvirt integration for launching Windows applications with a native form factor.
 
+https://github.com/rs189/Harmony/raw/refs/heads/main/demo.mp4
+
 # It is recommended to have a separate VM and Windows install when using Harmony as it is not designed to be used outside this project's scope.
 
 ## Requirements
