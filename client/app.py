@@ -353,7 +353,7 @@ class HarmonyApp():
                 if vm in self.vms_config and vm != self.app_vm:
                     logger.log_progress(f"HIBERNATING...")
                     logger.log_to_file(f'[HarmonyApp] [Info] Hibernating {vm}...')
-                    self.hibernate_vm(vm)
+                    self.hibernate.hibernate_vm(vm)
                     self.hibernate.wait_for_vm_hibernate(vm)
         
         logger.log_progress(f"REMOVING USB DEVICES...")

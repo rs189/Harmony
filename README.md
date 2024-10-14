@@ -9,6 +9,7 @@
 
 * A functional libvirt domain.
 * A functional looking glass installation.
+* Hibernation enabled in the Windows guest.
 * Python 3.10+ installation on both the host and the guest.
 
 ## Installation
@@ -78,6 +79,7 @@ Then copy the `.desktop` file created inside of `~/.local/share/applications`
 
 * Live USB Host Device monitoring.
 * Automatic suspend after a period of inactivity.
+* GPU power saving mode when the Harmony/Looking Glass window is closed.
 * Discord Rich Presence.
 * Automatic GPU binding and unbinding in the host.
 * Simplified installation process.

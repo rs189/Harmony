@@ -20,6 +20,7 @@ class HarmonyAppHibernate():
         self.common = HarmonyAppCommon()
 
     def hibernate_vm(self, vm_name):
+        logger.log_to_file(f'[HarmonyAppHibernate] [Info] Sending the hibernate command to the target VM {vm_name}.')
         ip_address = self.common.get_vm_ip(vm_name)
         if not ip_address:
             logger.log_to_file(f'[HarmonyAppHibernate] [Error] No IP address found for the target VM {vm_name}.')

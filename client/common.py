@@ -40,7 +40,7 @@ class HarmonyAppCommon():
         sys.exit(1)
 
     def requests_retry_session(self,
-        retries=3,
+        retries=30,
         backoff_factor=0.3,
         status_forcelist=(500, 502, 504),
         session=None,
