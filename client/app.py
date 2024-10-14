@@ -311,6 +311,7 @@ class HarmonyApp():
 
     def start_lg(self):
         lg_gdk_backend = harmony_config.get('looking-glass-gdk-backend')
+        logger.log_to_file(f"[HarmonyApp] [Info] Setting the Looking Glass backend to: {lg_gdk_backend}")
         os.environ["GDK_BACKEND"] = lg_gdk_backend
 
         lg_path = harmony_config.get('looking-glass-path')
@@ -318,6 +319,7 @@ class HarmonyApp():
             logger.log_to_file(f"[HarmonyApp] [Error] Looking Glass path not found.")
             sys.exit(1)
         lg_path = os.path.expanduser(lg_path)
+        logger.log_to_file(f"[HarmonyApp] [Info] Looking Glass path: {lg_path}")
 
         lg_command = [lg_path]
         lg_command.append(f'spice:port={int(harmony_config.get('looking-glass-port'))}')

@@ -3,6 +3,16 @@
     "host-port": 5000,
     "python-path": "",
     "looking-glass-path": "C:\\Program Files\\Looking Glass (host)\\looking-glass-host.exe",
+    "minimise-processes": [
+        "Discord.exe",
+        "steam.exe",
+        "notepad.exe",
+        "firefox.exe",
+        "Taskmrg.exe"
+    ],
+    "close-processes": [
+        ""
+    ],
     "wait-for-easy-anti-cheat": true,
     "create-black-window": true,
     "monitor-process": true

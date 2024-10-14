@@ -54,7 +54,19 @@ class TkWindow:
         self.root.configure(bg='black') # Set the background to black
         self._running = True
 
+        self.root.after(0, self.after_create)
+
         self.root.mainloop()
+
+    def after_create(self):
+        hwnd = win32gui.FindWindow(None, self.root.winfo_name())  # Find the hwnd using the window name
+        if hwnd:
+            logger.log_to_file(f'[TkWindow] [Info] Window hwnd: {hwnd}')
+        else:
+            logger.log_to_file('[TkWindow] [Warning] hwnd not found.')
+
+    def get_hwnd(self):
+        return win32gui.FindWindow(None, self.root.winfo_name())  # Return the hwnd of the Tk window
 
     def run(self):
         self.create_window()
@@ -101,6 +113,25 @@ class HarmonyHost():
                 if hwnds:
                     return hwnds[0]
         return None
+
+    def find_hwnds_from_process(self, process):
+        hwnds = []
+        for proc in psutil.process_iter(['pid', 'name']):
+            if proc.info['name'] == process:
+                def callback(hwnd, pid):
+                    if win32process.GetWindowThreadProcessId(hwnd)[1] == pid:
+                        hwnd_title = win32gui.GetWindowText(hwnd) 
+                        bad_titles = [
+                            "MSCTFIME UI",
+                            "Default IME",
+                            "Battery Watcher",
+                            "WinEventHub"
+                        ]
+                        if not any(bad_title in hwnd_title for bad_title in bad_titles):
+                            hwnds.append(hwnd)
+                    return True
+                win32gui.EnumWindows(callback, proc.info['pid'])
+        return hwnds
 
     def bring_hwnd_to_foreground(self, hwnd):
         # Check if the window is minimized; restore it if it is
@@ -217,6 +248,7 @@ class HarmonyHost():
             response = requests.get(request_address)
         except Exception as e:
             logger.log_to_file(f"[HarmonyHost] [Error] Failed sending the ready signal: {e}")
+            time.sleep(1)
             if tk_window:
                 tk_window.stop()
             if tk_thread:
@@ -235,10 +267,16 @@ class HarmonyHost():
             try:
                 response = requests.get(request_address)
                 logger.log_to_file(f"[HarmonyHost] [Info] The termination signal sent successfully.")
+                time.sleep(1)
+                if tk_window:
+                    tk_window.stop()
+                if tk_thread:
+                    tk_thread.join()
                 sys.exit(1)
                 return
             except Exception as e:
                 logger.log_to_file(f"[HarmonyHost] [Error] Error sending the termination signal: {e}")
+                time.sleep(1)
                 if tk_window:
                     tk_window.stop()
                 if tk_thread:
@@ -261,6 +299,21 @@ class HarmonyHost():
         if self.are_processes_running(args.killexes):
             for process in args.killexes:
                 self.kill_process(process)
+
+        minimise_processes = harmony_config.get('minimise-processes', [])
+        for process in minimise_processes:
+            if self.are_processes_running([process]):
+                logger.log_to_file(f"[HarmonyHost] [Info] Found running process to minimise: {process}")
+                hwnds = self.find_hwnds_from_process(process) # Get all window handles for the process
+                if hwnds:
+                    for hwnd in hwnds: # Loop through each window handle
+                        if hwnd:
+                            hwnd_title = win32gui.GetWindowText(hwnd) 
+                            if hwnd_title:
+                                win32gui.ShowWindow(hwnd, win32con.SW_MINIMIZE) # Send close message to each window
+                                logger.log_to_file(f"[HarmonyHost] [Info] Minimized window: {process} with the title: {hwnd_title}")
+                else:
+                    logger.log_to_file(f"[HarmonyHost] [Info] No windows found for process: {process}")
 
         if not self.are_processes_running(['looking-glass-host.exe']):
             lg_path = harmony_config.get('looking-glass-path')
