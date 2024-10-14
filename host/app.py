@@ -286,7 +286,7 @@ class HarmonyHost():
 if __name__ == '__main__':
     if not is_admin():
         # Re-run the script with admin privileges
-        print("Requesting administrative privileges...")
+        logger.log_to_file(f"Requesting administrative privileges...")
         ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, " ".join(sys.argv), None, 1)
         sys.exit()
 
