@@ -8,7 +8,7 @@
         "VRChat.exe"
     ],
     "killexes": [
-        "taskmgr.exe"
+        ""
     ],
     "usb_devices": [
         "Valve Software Index HMD",

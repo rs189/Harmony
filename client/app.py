@@ -297,7 +297,7 @@ class HarmonyApp():
                     other_mainexe = other_app_config.get('mainexe')
                     self.killexes += f' "{other_mainexe}"'
 
-        app_command = f'python.exe ../app.py -app {self.command} -mainexe {self.mainexe} -alwaysontop {self.alwaysontop} -exes {self.exes} -killexes {self.killexes} -delay {self.delay}'
+        app_command = f'pythonw.exe ../app.py -app {self.command} -mainexe {self.mainexe} -alwaysontop {self.alwaysontop} -exes {self.exes} -killexes {self.killexes} -delay {self.delay}'
         try:
             #response = requests.post(url, data={'command': app_command}, timeout=10)
             response = self.common.requests_retry_session().post(url, data={'command': app_command}, timeout=10)
@@ -328,6 +328,7 @@ class HarmonyApp():
         app_id = f"com.harmony.{args.app}"
         app_id = re.sub(r'\d+', lambda x: f'_{x.group()}', app_id)
         lg_command.append(f'win:appId={app_id}')
+        logger.log_to_file(f"[HarmonyApp] [Info] Launching Looking Glass with the command: {lg_command}")
         try:
             # Launch Looking Glass using Popen and monitor the process
             process = subprocess.Popen(lg_command)

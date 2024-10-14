@@ -1,3 +1,4 @@
+import ctypes
 import json
 import os
 import subprocess
@@ -39,7 +40,13 @@ class HarmonyListener(Flask):
                 return response
             return 'No command provided.'
 
+def set_console_non_topmost():
+    user32 = ctypes.windll.user32
+    hwnd = user32.GetForegroundWindow()
+    user32.SetWindowPos(hwnd, -2, 0, 0, 0, 0, 0x0001 | 0x0002)  # SWP_NOMOVE | SWP_NOSIZE
+
 if __name__ == '__main__':
+    set_console_non_topmost() # Set console window as non-topmost
     listener = HarmonyListener(__name__)
     harmony_port = int(harmony_config.get('port', 5000))
     listener.run(host='0.0.0.0', port=harmony_port)

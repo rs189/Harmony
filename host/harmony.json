@@ -3,14 +3,7 @@
     "host-port": 5000,
     "python-path": "",
     "looking-glass-path": "C:\\Program Files\\Looking Glass (host)\\looking-glass-host.exe",
-    "minimise-processes": [
-        "firefox.exe"
-    ],
-    "close-processes": [
-        "steam.exe",
-        "steamservice.exe",
-        "steamwebhelper.exe"
-    ],
     "wait-for-easy-anti-cheat": true,
+    "create-black-window": true,
     "monitor-process": true
 }

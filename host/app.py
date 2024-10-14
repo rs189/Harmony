@@ -6,7 +6,9 @@ import psutil
 import requests
 import subprocess
 import sys
+import threading
 import time
+import tkinter as tk
 import win32con
 import win32gui
 import win32process
@@ -39,6 +41,28 @@ if not os.path.exists(harmony_config_path):
     sys.exit(1)
 with open(harmony_config_path, 'r') as f:
     harmony_config = json.load(f)
+
+class TkWindow:
+    def __init__(self):
+        self.root = None
+        self._running = False
+
+    def create_window(self):
+        self.root = tk.Tk()
+        self.root.overrideredirect(True) # Remove window decorations (borderless)
+        self.root.geometry(f"{self.root.winfo_screenwidth()}x{self.root.winfo_screenheight()}+0+0")  # Full screen
+        self.root.configure(bg='black') # Set the background to black
+        self._running = True
+
+        self.root.mainloop()
+
+    def run(self):
+        self.create_window()
+
+    def stop(self):
+        if self.root is not None:
+            self._running = False
+            self.root.quit()
 
 class HarmonyHost():
     def __init__(self):
@@ -77,17 +101,6 @@ class HarmonyHost():
                 if hwnds:
                     return hwnds[0]
         return None
-    
-    def find_hwnds_from_process(self, process):
-        hwnds = []
-        for proc in psutil.process_iter(['pid', 'name']):
-            if proc.info['name'] == process:
-                def callback(hwnd, pid):
-                    if win32process.GetWindowThreadProcessId(hwnd)[1] == pid:
-                        hwnds.append(hwnd)
-                    return True
-                win32gui.EnumWindows(callback, proc.info['pid'])
-        return hwnds  # Return all window handles associated with the process
 
     def bring_hwnd_to_foreground(self, hwnd):
         # Check if the window is minimized; restore it if it is
@@ -106,7 +119,7 @@ class HarmonyHost():
                 hwnd,
                 win32con.HWND_TOPMOST, # Bring to the top of the Z-order
                 0, 0, 0, 0,
-                win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_SHOWWINDOW
+                win32con.SWP_NOMOVE | win32con.SWP_NOSIZE
             )
 
             if args.alwaysontop.lower() != 'true':
@@ -115,12 +128,27 @@ class HarmonyHost():
                     hwnd,
                     win32con.HWND_NOTOPMOST,
                     0, 0, 0, 0,
-                    win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_SHOWWINDOW
+                    win32con.SWP_NOMOVE | win32con.SWP_NOSIZE
                 )
         except Exception as e:
             logger.log_to_file(f'[HarmonyHost] [Error] Failed to bring window to foreground: {e}')
 
     def wait_host_ready(self):
+        # Create a black window to cover up the desktop
+        create_black_window = harmony_config.get('create-black-window')
+        if str(create_black_window).lower() == 'true':
+            logger.log_to_file(f"[HarmonyHost] [Info] Creating the black window.")
+            tk_window = TkWindow()
+            tk_thread = threading.Thread(target=tk_window.run)
+            tk_thread.start() 
+
+        if self.are_processes_running(args.exes):
+            logger.log_to_file(f"[HarmonyHost] [Info] One or more required processes are already running.")
+            hwnd = self.find_hwnd_from_process(args.mainexe)
+            if hwnd:
+                logger.log_to_file(f"[HarmonyHost] [Info] Bringing window to foreground: {args.mainexe}")
+                self.bring_hwnd_to_foreground(hwnd)
+
         # Wait for the main application to start
         timeout = 100
         elapsed = 0
@@ -132,7 +160,7 @@ class HarmonyHost():
                 logger.log_to_file(f"[HarmonyHost] [Error] The main application is not running after {timeout} seconds.")
                 sys.exit(1)
         logger.log_to_file(f"[HarmonyHost] [Info] The main application is running.")
-
+        
         # Wait for the main application window to appear
         hwnd_timeout = 100
         hwnd_elapsed = 0
@@ -144,7 +172,7 @@ class HarmonyHost():
                 logger.log_to_file(f"[HarmonyHost] [Error] The main application window is not running after {hwnd_timeout} seconds.")
                 sys.exit(1)
         logger.log_to_file(f"[HarmonyHost] [Info] The main application window is found.")
-        
+
         # Optional, wait for the easy anti cheat launcher
         wait_for_eac = harmony_config.get('wait-for-easy-anti-cheat')
         if str(wait_for_eac).lower() == 'true':
@@ -189,22 +217,32 @@ class HarmonyHost():
             response = requests.get(request_address)
         except Exception as e:
             logger.log_to_file(f"[HarmonyHost] [Error] Failed sending the ready signal: {e}")
+            if tk_window:
+                tk_window.stop()
+            if tk_thread:
+                tk_thread.join()
             sys.exit(1)
 
         # Monitor the process 
         time.sleep(5)
         wait_for_eac = harmony_config.get('monitor-process')
         if str(wait_for_eac).lower() == 'true':
-            monitor_interval = 0.5
+            monitor_interval = 0.1
             while self.are_processes_running([args.mainexe]):
                 time.sleep(monitor_interval)
             logger.log_to_file(f"[HarmonyHost] [Info] Sending the termination signal.")
             request_address = 'http://' + host_ip + ':' + str(host_port) + '/terminate'
             try:
                 response = requests.get(request_address)
+                logger.log_to_file(f"[HarmonyHost] [Info] The termination signal sent successfully.")
                 sys.exit(1)
                 return
             except Exception as e:
+                logger.log_to_file(f"[HarmonyHost] [Error] Error sending the termination signal: {e}")
+                if tk_window:
+                    tk_window.stop()
+                if tk_thread:
+                    tk_thread.join()
                 sys.exit(1)
                 return
         sys.exit(1)
@@ -223,66 +261,26 @@ class HarmonyHost():
         if self.are_processes_running(args.killexes):
             for process in args.killexes:
                 self.kill_process(process)
-        
-        minimise_processes = harmony_config.get('minimise-processes', [])
-        for process in minimise_processes:
-            if self.are_processes_running([process]):
-                hwnds = self.find_hwnds_from_process(process)  # Get all window handles for the process
-                if hwnds:
-                    for hwnd in hwnds: # Loop through each window handle
-                        win32gui.ShowWindow(hwnd, win32con.SW_MINIMIZE)  # Send close message to each window
-                        logger.log_to_file(f"[HarmonyHost] [Info] Minimized window: {process}")
-                else:
-                    logger.log_to_file(f"[HarmonyHost] [Info] No windows found for process: {process}")
 
-        close_processes = harmony_config.get('close-processes', [])
-        for process in close_processes:
-            if self.are_processes_running([process]):
-                hwnds = self.find_hwnds_from_process(process)  # Get all window handles for the process
-                if hwnds:
-                    for hwnd in hwnds:  # Loop through each window handle
-                        try:
-                            # Check if the window is still valid before sending the close message
-                            if win32gui.IsWindow(hwnd):  # Check if the window handle is valid
-                                win32gui.PostMessage(hwnd, win32con.WM_CLOSE, 0, 0)  # Send close message to each window
-                                logger.log_to_file(f"[HarmonyHost] [Info] Sent close signal to window: {process}")
-                            else:
-                                logger.log_to_file(f"[HarmonyHost] [Info] Invalid window handle: {hwnd}")
-                        except Exception as e:
-                            logger.log_to_file(f"[HarmonyHost] [Error] Failed to close window {hwnd}: {str(e)}")
-                else:
-                    logger.log_to_file(f"[HarmonyHost] [Info] No windows found for process: {process}")
-                    
-        # Kill the looking glass host
-        if self.are_processes_running(['looking-glass-host.exe']):
-            self.kill_process('looking-glass-host.exe')
-        
-        lg_path = harmony_config.get('looking-glass-path')
-        if not lg_path:
-            logger.log_to_file(f"[HarmonyHost] [Error] Looking Glass path not found.")
-            sys.exit(1)
-        lg_path = os.path.expanduser(lg_path)
-        logger.log_to_file("lg path")
-        logger.log_to_file(lg_path)
+        if not self.are_processes_running(['looking-glass-host.exe']):
+            lg_path = harmony_config.get('looking-glass-path')
+            if not lg_path:
+                logger.log_to_file(f"[HarmonyHost] [Error] Looking Glass path not found.")
+                sys.exit(1)
+            lg_path = os.path.expanduser(lg_path)
+            logger.log_to_file("lg path")
+            logger.log_to_file(lg_path)  
 
-        # Restart the looking glass host
-        subprocess.Popen(
-            lg_path,
-            #'"C:\\Program Files\\Looking Glass (host)\\looking-glass-host.exe"',
-            creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP,
-            close_fds=True,
-            shell=True
-        )
+            subprocess.Popen(
+                lg_path,
+                creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP,
+                close_fds=True,
+                shell=True
+            )
 
-        if self.are_processes_running(args.exes):
-            logger.log_to_file(f"[HarmonyHost] [Info] One or more required processes are already running.")
-            hwnd = self.find_hwnd_from_process(args.mainexe)
-            if hwnd:
-                logger.log_to_file(f"[HarmonyHost] [Info] Bringing window to foreground: {args.mainexe}")
-                self.bring_hwnd_to_foreground(hwnd)
-            self.wait_host_ready()
+        time.sleep(0.1)
 
-        logger.log_to_file(f"[HarmonyHost] [Error] Launching application.")
+        logger.log_to_file(f"[HarmonyHost] [Info] Waiting to be ready.")
         self.wait_host_ready()
 
 if __name__ == '__main__':
@@ -291,6 +289,26 @@ if __name__ == '__main__':
         print("Requesting administrative privileges...")
         ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, " ".join(sys.argv), None, 1)
         sys.exit()
+
+    # Kill all other instances of this app.py AND restart LG
+    try:
+        # Get the list of running processes using 'tasklist'
+        processes = subprocess.check_output(['tasklist'], text=True).splitlines()
+        for process in processes:
+            # Check if 'python' and 'app.py' are in the process information
+            if 'python.exe' in process and 'app.py' in process:
+                logger.log_to_file(f"Found process: {process}")
+                # Extract the PID from the process line (2nd item in space-separated line)
+                pid = int(process.split()[1])
+                current_pid = os.getpid()
+                # Kill the process if it is not the current process
+                if pid != current_pid:
+                    logger.log_to_file(f"Killing process with PID {pid}...")
+                    subprocess.run(['taskkill', '/PID', str(pid), '/F'])  # '/F' forces termination     
+    except subprocess.CalledProcessError as e:
+        logger.log_to_file(f"Error checking running processes: {e}")
+
+    time.sleep(0.1)
 
     harmony_host = HarmonyHost()
     harmony_host.run()

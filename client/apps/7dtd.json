@@ -10,10 +10,7 @@
         "7dLauncher.exe"
     ],
     "killexes": [
-        "explorer.exe",
-        "taskmgr.exe",
-        "msedge.exe",
-        "msedgewebview2.exe"
+        "explorer.exe"
     ],
     "usb_devices": [
         ""

@@ -8,10 +8,7 @@
         "FlightSimulator.exe"
     ],
     "killexes": [
-        "explorer.exe",
-        "taskmgr.exe",
-        "msedge.exe",
-        "msedgewebview2.exe"
+        "explorer.exe"
     ],
     "usb_devices": [
         "Saitek PLC Saitek X52 PRO Flight Control System"
