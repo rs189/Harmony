@@ -8,7 +8,8 @@
         "steam.exe",
         "notepad.exe",
         "firefox.exe",
-        "Taskmrg.exe"
+        "Taskmrg.exe",
+        "python.exe"
     ],
     "close-processes": [
         ""

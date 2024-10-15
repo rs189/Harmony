@@ -3,7 +3,7 @@
     "name": "Microsoft Flight Simulator",
     "splash": "msfs.png",
     "mainexe": "FlightSimulator.exe",
-    "alwaysontop": false,
+    "alwaysontop": true,
     "exes": [
         "FlightSimulator.exe"
     ],

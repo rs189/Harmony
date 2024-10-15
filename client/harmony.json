@@ -10,7 +10,7 @@
         "audio:micDefault=allow",
         "spice:captureOnStart=yes",
         "input:captureOnFocus=yes",
-        "input:grabKeyboard=no" 
+        "input:grabKeyboard=no"
     ],
     "harmony-port": 5000
 }
