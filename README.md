@@ -1,6 +1,8 @@
 # Harmony
  A looking-glass and libvirt integration for launching Windows applications with a native form factor.
 
+# This project is not affiliated with the official Looking Glass project. Any issues arising from using Harmony should not be reported to the Looking Glass team.
+
 [![Video](https://img.youtube.com/vi/MWZ3jt53io8/maxresdefault.jpg)](https://youtu.be/MWZ3jt53io8)
 
 # It is recommended to have a separate VM and Windows install when using Harmony as it is not designed to be used outside this project's scope.
@@ -81,7 +83,7 @@ Then copy the `.desktop` file created inside of `~/.local/share/applications`
 * A GUI configuration tool with automatic `.json` and `.desktop` file creation.
 * Live USB Host Device monitoring.
 * GPU power saving mode when the Harmony/Looking Glass window is closed.
-* Automatic suspend after a period of inactivity.
+* ~~Automatic suspend after a period of inactivity.~~
 * Automatic GPU binding and unbinding in the host.
 * Discord Rich Presence.
 * Implementation for other software other than games.

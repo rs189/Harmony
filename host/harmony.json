@@ -16,5 +16,6 @@
     ],
     "wait-for-easy-anti-cheat": true,
     "create-black-window": true,
-    "monitor-process": true
+    "monitor-process": true,
+    "keepalive_timeout": 300
 }
