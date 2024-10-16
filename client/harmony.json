@@ -7,7 +7,6 @@
     "looking-glass-gdk-backend": "wayland",
     "looking-glass-path": "~/Git/LookingGlass/client/build/looking-glass-client",
     "looking-glass-args": [
-        "win:jitRender=yes",
         "win:quickSplash=yes",
         "wayland:warpSupport=no",
         "audio:micShowIndicator=no", 
