@@ -99,7 +99,9 @@ class HarmonyAppUsb:
                 logger.log_to_file(f"Successfully {command}ed device {device['vendor_id']}:{device['product_id']} (Bus {device['bus']}, Device {device['device']})")
 
     def monitor_usb_changes(self):
-       self.usb_devices = [usb_device.lower() for usb_device in self.usb_devices]
+        if not self.usb_devices or (len(self.usb_devices) == 1 and self.usb_devices[0] == ""):
+            return
+        self.usb_devices = [usb_device.lower() for usb_device in self.usb_devices]
 
        context = pyudev.Context()
        monitor = pyudev.Monitor.from_netlink(context)
