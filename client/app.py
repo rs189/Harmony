@@ -295,7 +295,8 @@ class HarmonyApp():
         
         logger.log_progress(f"REMOVING USB DEVICES...")
         logger.log_to_file(f'[HarmonyApp] [Info] Removing hostdev entries from {self.app_vm} VM...')
-        self.usb.remove_hostdev_usb_entries()
+        if not self.common.is_vm_running(self.app_vm):
+            self.usb.remove_hostdev_usb_entries()
 
         logger.log_progress(f"STARTING VM...")
         logger.log_to_file(f'[HarmonyApp] [Info] Starting VM {self.app_vm}...')

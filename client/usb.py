@@ -29,10 +29,6 @@ class HarmonyAppUsb:
         subprocess.run(['virsh', 'define', xml_file])
 
     def find_device_info(self, device_name):
-        """
-        This method searches for USB devices exactly matching the device name.
-        It returns a list of dictionaries containing vendor ID, product ID, bus, and device for all matching devices.
-        """
         try:
             # Get a list of all connected USB devices
             output = subprocess.check_output(['lsusb'], text=True)
@@ -60,16 +56,11 @@ class HarmonyAppUsb:
             return matching_devices
         except subprocess.CalledProcessError as e:
             logger.log_to_file(f"Error finding USB devices: {str(e)}")
-            sys.exit(1)
 
     def update_vm_usb(self, device_name, command):
-        """
-        Attach or detach all matching USB devices to/from the virtual machine.
-        """
         matching_devices = self.find_device_info(device_name)
         if not matching_devices:
             logger.log_to_file(f"Could not find any devices matching '{device_name}'")
-            sys.exit(1)
     
         logger.log_to_file(f"Found {len(matching_devices)} matching devices:")
         for device in matching_devices:
@@ -128,16 +119,23 @@ class HarmonyAppUsb:
             # Use regex to find all <hostdev> entries for USB devices
             matches = re.findall(r'<hostdev mode=\'subsystem\' type=\'usb\' managed=\'yes\'>.*?</hostdev>', content, flags=re.DOTALL)
 
-        # Extract vendor and product IDs from matches
+        # Extract vendor, product IDs, and address from matches
         attached_devices = []
         for match in matches:
             vendor_match = re.search(r'<vendor id=\'0x(\w+)\'/>', match)
             product_match = re.search(r'<product id=\'0x(\w+)\'/>', match)
+            address_match = re.search(r'<address bus=\'(\d+)\' device=\'(\d+)\'/>', match)
 
-            if vendor_match and product_match:
+            if vendor_match and product_match and address_match:
                 vendor_id = vendor_match.group(1)
                 product_id = product_match.group(1)
-                attached_devices.append(f'{vendor_id}:{product_id}')
+                bus = address_match.group(1)
+                device = address_match.group(2)
+                attached_devices.append({
+                    'id': f'{vendor_id}:{product_id}',
+                    'bus': bus,
+                    'device': device
+                })
 
         return attached_devices
 
@@ -145,21 +143,25 @@ class HarmonyAppUsb:
         for usb_device in self.usb_devices:
             self.update_vm_usb(usb_device, 'attach-device')
 
-    def detach_usb_device(self, device_name):
-        # Extract vendor and product IDs from device_name
-        vendor_id, product_id = device_name.split(':')
+    def detach_usb_device(self, device):
+        # Extract vendor and product IDs, and the bus/device numbers from the dictionary
+        vendor_id, product_id = device['id'].split(':')
+        bus = device['bus']
+        device_number = device['device']
 
-        # XML to detach the device
+        # Construct XML to detach the device
         xml = f"""
-        <hostdev mode='subsystem' type='usb' managed='yes'>
-          <source>
-            <vendor id='0x{vendor_id}'/>
-            <product id='0x{product_id}'/>
-          </source>
-        </hostdev>
+<hostdev mode='subsystem' type='usb' managed='yes'>
+  <source>
+    <vendor id='0x{vendor_id}'/>
+    <product id='0x{product_id}'/>
+    <address bus='{bus}' device='{device_number}'/>
+  </source>
+</hostdev>
         """
 
-        logger.log_to_file(f"Running virsh detach-device for USB device: {device_name}")
+        logger.log_to_file(f"Running virsh detach-device for USB device: {vendor_id}:{product_id} (Bus {bus}, Device {device_number})")
+        
         process = subprocess.run(
             ['virsh', 'detach-device', self.app_vm, '/dev/stdin', '--persistent'],
             input=xml,
@@ -167,9 +169,9 @@ class HarmonyAppUsb:
             capture_output=True
         )
         if process.returncode != 0:
-            logger.log_to_file(f"Error detaching device {device_name}: {process.stderr}")
+            logger.log_to_file(f"Error detaching device {vendor_id}:{product_id}: {process.stderr}")
         else:
-            logger.log_to_file(f"Successfully detached device {device_name}.")
+            logger.log_to_file(f"Successfully detached device {vendor_id}:{product_id} (Bus {bus}, Device {device_number}).")
 
     def handle_usb_removal(self):
         logger.log_to_file("Detected removal of USB device.")
