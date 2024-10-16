@@ -103,15 +103,15 @@ class HarmonyAppUsb:
             return
         self.usb_devices = [usb_device.lower() for usb_device in self.usb_devices]
 
-       context = pyudev.Context()
-       monitor = pyudev.Monitor.from_netlink(context)
-       monitor.filter_by('usb')
-       
-       for action, device in monitor:
-           if action == 'add':
-               self.handle_usb_addition()
-           elif action == 'remove':
-               self.handle_usb_removal()
+        context = pyudev.Context()
+        monitor = pyudev.Monitor.from_netlink(context)
+        monitor.filter_by('usb')
+        
+        for action, device in monitor:
+            if action == 'add':
+                self.handle_usb_addition()
+            elif action == 'remove':
+                self.handle_usb_removal()
 
     def get_attached_usb_devices(self):
         xml_file = f'/tmp/{self.app_vm}.xml'
