@@ -26,6 +26,7 @@ class HarmonyAppUsb:
             file.seek(0)
             file.write(content)
             file.truncate()
+        subprocess.run(['virsh', 'define', xml_file])
 
     def find_device_info(self, device_name):
         """
@@ -106,7 +107,7 @@ class HarmonyAppUsb:
         context = pyudev.Context()
         monitor = pyudev.Monitor.from_netlink(context)
         monitor.filter_by('usb')
-        
+
         for action, device in monitor:
             if action == 'add':
                 self.handle_usb_addition()
