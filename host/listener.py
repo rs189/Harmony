@@ -15,12 +15,32 @@ if not os.path.exists(harmony_config_path):
 with open(harmony_config_path, 'r') as f:
     harmony_config = json.load(f)
 
+last_keepalive_time = time.time()
+watcher_thread = None
+thread_lock = threading.Lock()
+
 def run_command_after_delay(command, delay=0.1):
     time.sleep(delay)
     try:
         subprocess.run(command, shell=True)
     except subprocess.CalledProcessError as e:
         print(f"Error running command: {e}")
+
+def keepalive_watcher():
+    keepalive_timeout = harmony_config.get('keepalive_timeout', 60)
+    global last_keepalive_time
+    while True:
+        time_since_last_keepalive = time.time() - last_keepalive_time
+        if time_since_last_keepalive >= keepalive_timeout:
+            print("Timeout received, hibernating PC.")
+            subprocess.run(["shutdown", "/h"])  # Hibernate the PC
+            break  # Exit the loop after hibernation
+        print("Keepalive watcher alive.")
+        time.sleep(1)  # Check every second
+
+# Check if watcher thread is alive
+def is_thread_alive(thread):
+    return thread is not None and thread.is_alive()
 
 # Harmony listener
 class HarmonyListener(Flask):
@@ -39,6 +59,24 @@ class HarmonyListener(Flask):
 
                 return response
             return 'No command provided.'
+
+        @self.route('/keepalive', methods=['GET'])
+        def keep_alive():
+            global last_keepalive_time, watcher_thread
+            last_keepalive_time = time.time()  # Reset keepalive time
+            
+            # Lock the thread to avoid race conditions
+            with thread_lock:
+                # Check if the watcher thread is alive
+                if not is_thread_alive(watcher_thread):
+                    print("Starting a new watcher thread.")
+                    # Create a new watcher thread if it doesn't exist or has stopped
+                    watcher_thread = threading.Thread(target=keepalive_watcher, daemon=True)
+                    watcher_thread.start()
+                else:
+                    print("Watcher thread is already running.")
+            
+            return 'Acknowledged'
 
 def set_console_non_topmost():
     user32 = ctypes.windll.user32

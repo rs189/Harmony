@@ -1,9 +1,12 @@
 {
+    "domains": [
+        "win10-games",
+        "win10-vr",
+        "win10-gpu-software"
+    ],
     "looking-glass-gdk-backend": "wayland",
     "looking-glass-path": "~/Git/LookingGlass/client/build/looking-glass-client",
-    "looking-glass-port": 5905,
     "looking-glass-args": [
-        "win:jitRender=yes",
         "win:quickSplash=yes",
         "wayland:warpSupport=no",
         "audio:micShowIndicator=no", 
@@ -12,5 +15,6 @@
         "input:captureOnFocus=yes",
         "input:grabKeyboard=no"
     ],
+    "spice-port": 5905,
     "harmony-port": 5000
 }

@@ -1,0 +1,21 @@
+{
+    "vm": "win10-games",
+    "name": "Euro Truck Simulator 2",
+    "splash": "ets2.png",
+    "mainexe": "eurotrucks2.exe",
+    "alwaysontop": false,
+    "exes": [
+        "eurotrucks2.exe"
+    ],
+    "killexes": [
+        "explorer.exe"
+    ],
+    "usb_devices": [
+        "Logitech, Inc. G29 Driving Force Racing Wheel [PS4]",
+        "Logitech, Inc. G29 Driving Force Racing Wheel [PS3]"
+    ],
+    "command": "steam://rungameid/227300",
+    "delay": 2,
+    "timeout": 300
+  }
+  

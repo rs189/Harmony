@@ -114,6 +114,11 @@ class HarmonyHost():
                     return hwnds[0]
         return None
 
+    def is_valid_window(self, hwnd):
+        # Check if the window is visible and has the desired style
+        style = win32gui.GetWindowLong(hwnd, win32con.GWL_STYLE)
+        return win32gui.IsWindowVisible(hwnd) and (style & win32con.WS_DISABLED) == 0
+
     def find_hwnds_from_process(self, process):
         hwnds = []
         for proc in psutil.process_iter(['pid', 'name']):
@@ -121,14 +126,21 @@ class HarmonyHost():
                 def callback(hwnd, pid):
                     if win32process.GetWindowThreadProcessId(hwnd)[1] == pid:
                         hwnd_title = win32gui.GetWindowText(hwnd) 
-                        bad_titles = [
+                        bad_titles = [ #TODO: Consider alternative way of rejecting invalid hwnd instances rather than manually blacklisting them
                             "MSCTFIME UI",
                             "Default IME",
                             "Battery Watcher",
                             "WinEventHub"
                         ]
-                        if not any(bad_title in hwnd_title for bad_title in bad_titles):
-                            hwnds.append(hwnd)
+                        # Check if the window handle is valid and does not match any bad titles
+                        try:
+                            if (self.is_valid_window(hwnd) and 
+                                not any(bad_title in hwnd_title for bad_title in bad_titles) and 
+                                "$AS" not in hwnd_title and 
+                                "$Hour" not in hwnd_title):
+                                hwnds.append(hwnd)  # Append if all conditions are met
+                        except Exception as e:
+                            logger.log_to_file(f'[HarmonyHost] [Error] Error checking for valid window: {e}')
                     return True
                 win32gui.EnumWindows(callback, proc.info['pid'])
         return hwnds
@@ -172,13 +184,6 @@ class HarmonyHost():
             tk_window = TkWindow()
             tk_thread = threading.Thread(target=tk_window.run)
             tk_thread.start() 
-
-        if self.are_processes_running(args.exes):
-            logger.log_to_file(f"[HarmonyHost] [Info] One or more required processes are already running.")
-            hwnd = self.find_hwnd_from_process(args.mainexe)
-            if hwnd:
-                logger.log_to_file(f"[HarmonyHost] [Info] Bringing window to foreground: {args.mainexe}")
-                self.bring_hwnd_to_foreground(hwnd)
 
         # Wait for the main application to start
         timeout = 100
@@ -229,22 +234,31 @@ class HarmonyHost():
                 time.sleep(eac_interval)
 
         # Wait a little for the window to appear
-        time.sleep(1)
+        time.sleep(0.1)
 
         delay = float(args.delay)
         logger.log_to_file(f"[HarmonyHost] [Info] Sending the ready signal after {delay} seconds...")
         time.sleep(delay)
 
-        if self.are_processes_running(args.exes):
-            hwnd = self.find_hwnd_from_process(args.mainexe)
-            if hwnd:
-                logger.log_to_file(f"[HarmonyHost] [Info] Bringing window to foreground: {args.mainexe}")
-                self.bring_hwnd_to_foreground(hwnd)
+        try:
+            logger.log_to_file(f"[HarmonyHost] [Info] Bringing the main window to the foreground...")
+            if self.are_processes_running([args.mainexe]):
+                hwnds = self.find_hwnds_from_process(args.mainexe)
+                if hwnds:
+                    for hwnd in hwnds: # Loop through each window handle
+                        if hwnd:
+                            hwnd_title = win32gui.GetWindowText(hwnd) 
+                            if hwnd_title:
+                                logger.log_to_file(f"[HarmonyHost] [Info] Bringing window to foreground: {args.mainexe} with the title: {hwnd_title}")
+                                self.bring_hwnd_to_foreground(hwnd)
+        except Exception as e:
+            logger.log_to_file(f"[HarmonyHost] [Error] Error bringing the main window to the foreground: {e}")
 
         host_ip = harmony_config.get('host-ip')
         host_port = harmony_config.get('host-port')
         request_address = 'http://' + host_ip + ':' + str(host_port) + '/ready'
         try:
+            logger.log_to_file(f"[HarmonyHost] [Info] Sending the ready signal...")
             response = requests.get(request_address)
         except Exception as e:
             logger.log_to_file(f"[HarmonyHost] [Error] Failed sending the ready signal: {e}")
@@ -257,12 +271,26 @@ class HarmonyHost():
 
         # Monitor the process 
         time.sleep(5)
-        wait_for_eac = harmony_config.get('monitor-process')
-        if str(wait_for_eac).lower() == 'true':
+        monitor_process = harmony_config.get('monitor-process')
+        if str(monitor_process).lower() == 'true':
             monitor_interval = 0.1
+            keepalive_interval = 5
+            last_keepalive_time = time.time()
+            harmony_port = int(harmony_config.get('port', 5000))
             while self.are_processes_running([args.mainexe]):
                 time.sleep(monitor_interval)
-            logger.log_to_file(f"[HarmonyHost] [Info] Sending the termination signal.")
+
+                if time.time() - last_keepalive_time >= keepalive_interval:
+                    keepalive_address = f'http://127.0.0.1:{harmony_port}/keepalive'
+                    try:
+                        keepalive_response = requests.get(keepalive_address)
+                        logger.log_to_file(f"[HarmonyHost] [Info] Keepalive signal sent successfully: {keepalive_response.status_code}")
+                    except Exception as e:
+                        logger.log_to_file(f"[HarmonyHost] [Error] Error sending the keepalive signal: {e}")
+            
+                    last_keepalive_time = time.time()  # Reset the keepalive timer
+
+            logger.log_to_file(f"[HarmonyHost] [Info] Sending the termination signal, mainexe running: {str(self.are_processes_running([args.mainexe]))}")
             request_address = 'http://' + host_ip + ':' + str(host_port) + '/terminate'
             try:
                 response = requests.get(request_address)
@@ -348,8 +376,7 @@ if __name__ == '__main__':
         # Get the list of running processes using 'tasklist'
         processes = subprocess.check_output(['tasklist'], text=True).splitlines()
         for process in processes:
-            # Check if 'python' and 'app.py' are in the process information
-            if 'python.exe' in process and 'app.py' in process:
+            if 'pythonw.exe' in process:
                 logger.log_to_file(f"Found process: {process}")
                 # Extract the PID from the process line (2nd item in space-separated line)
                 pid = int(process.split()[1])
