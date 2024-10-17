@@ -36,7 +36,7 @@ class HarmonyAppUsb:
 
             logger.log_to_file("All USB devices:")
             for line in output.splitlines():
-                logger.log_to_file(line)
+                #logger.log_to_file(line)
                 if device_name.lower() in line.lower():
                     match = re.search(r'Bus (\d+) Device (\d+): ID (\w+):(\w+)\s*(.*)', line)
                     if match:
@@ -140,6 +140,7 @@ class HarmonyAppUsb:
         return attached_devices
 
     def handle_usb_addition(self):
+        logger.log_to_file("Detected addition of USB device.")
         for usb_device in self.usb_devices:
             self.update_vm_usb(usb_device, 'attach-device')
 
