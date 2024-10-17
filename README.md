@@ -1,7 +1,7 @@
 # Harmony
  A looking-glass and libvirt integration for launching Windows applications with a native form factor.
 
-# This project is not affiliated with the official Looking Glass project or libvirt. Any issues arising from using Harmony should not be reported to the Looking Glass team or the libvirt team.
+# This project is not affiliated with the official Looking Glass or libvirt projects. Any issues arising from using Harmony should not be reported to the Looking Glass team or the libvirt teams.
 
 [![Video](https://img.youtube.com/vi/MWZ3jt53io8/maxresdefault.jpg)](https://youtu.be/MWZ3jt53io8)
 
@@ -52,7 +52,7 @@
 
 You can obtain the Steam App ID from either SteamDB or by creating a shortcut using the Steam client and copying the launch options.
 
-8. From inside the Harmony client folder, launch your desired game by either running the `env GDK_BACKEND=x11 /usr/bin/python app.py -app="APPNAME"` command in the terminal or create a `.desktop` naming it `com.harmony.msfs.APPNAME.desktop` where `APPNAME` follows the the name of the `.json` configuration, following this example:
+8. From inside the Harmony client folder, launch your desired game by either running the `env GDK_BACKEND=x11 /usr/bin/python app.py -app="APPNAME"` command in the terminal or create a `.desktop` naming it `com.harmony.msfs.APPNAME.desktop` where `APPNAME` follows the name of the `.json` configuration, following this example:
 
 ```
 [Desktop Entry]
