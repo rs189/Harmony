@@ -1,7 +1,7 @@
 # Harmony
  A looking-glass and libvirt integration for launching Windows applications with a native form factor.
 
-# This project is not affiliated with the official Looking Glass or libvirt projects. Any issues arising from using Harmony should not be reported to the Looking Glass team or the libvirt teams.
+# This project is not affiliated with the official Looking Glass or libvirt projects. Any issues arising from using Harmony should not be reported to the Looking Glass or the libvirt teams.
 
 [![Video](https://img.youtube.com/vi/MWZ3jt53io8/maxresdefault.jpg)](https://youtu.be/MWZ3jt53io8)
 
