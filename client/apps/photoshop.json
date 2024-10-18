@@ -1,0 +1,19 @@
+{
+    "vm": "win10-gpu-software",
+    "name": "Adobe Photoshop",
+    "splash": "default.png",
+    "mainexe": "Photoshop.exe",
+    "alwaysontop": false,
+    "exes": [
+        "Photoshop.exe"
+    ],
+    "killexes": [
+        "explorer.exe"
+    ],
+    "usb_devices": [
+    ],
+    "command": "C:\\Program Files\\Adobe\\Adobe Photoshop 2024\\Photoshop.exe",
+    "delay": 0,
+    "timeout": 300
+  }
+  

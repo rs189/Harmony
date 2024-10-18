@@ -222,7 +222,7 @@ class HarmonyApp():
                     other_mainexe = other_app_config.get('mainexe')
                     self.killexes += f' "{other_mainexe}"'
 
-        app_command = f'pythonw.exe ../app.py -app {self.command} -mainexe {self.mainexe} -alwaysontop {self.alwaysontop} -exes {self.exes} -killexes {self.killexes} -delay {self.delay}'
+        app_command = f'pythonw.exe ../app.py -app "{self.command}" -mainexe {self.mainexe} -alwaysontop {self.alwaysontop} -exes {self.exes} -killexes {self.killexes} -delay {self.delay}'
         try:
             #response = requests.post(url, data={'command': app_command}, timeout=10)
             response = self.common.requests_retry_session().post(url, data={'command': app_command}, timeout=10)

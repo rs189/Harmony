@@ -6,6 +6,11 @@ import threading
 import time
 
 from flask import Flask, request
+from logger import Logger
+
+current_path = os.path.dirname(os.path.realpath(__file__))
+
+logger = Logger(os.path.join(current_path, 'listener.log'))
 
 # Harmony configuration file
 harmony_config_path = os.path.join(os.path.dirname(__file__), 'harmony.json')

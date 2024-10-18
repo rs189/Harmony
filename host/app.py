@@ -236,6 +236,8 @@ class HarmonyHost():
         # Wait a little for the window to appear
         time.sleep(0.1)
 
+        if not args.delay:
+            args.delay = 0
         delay = float(args.delay)
         logger.log_to_file(f"[HarmonyHost] [Info] Sending the ready signal after {delay} seconds...")
         time.sleep(delay)
@@ -315,11 +317,10 @@ class HarmonyHost():
 
     def run(self):
         if not self.are_processes_running(args.exes):
-            #if args.app.startswith('steam://'):
-            #    command = f'start {args.app}'
-            #else:
-            #    command = args.app
-            command = f'start {args.app}'
+            if args.app.startswith('steam://'):
+                command = f'start {args.app}'
+            else:
+                command = args.app
             logger.log_to_file(f"[HarmonyHost] [Info] Executing command: {args.mainexe}")
             subprocess.Popen(command, shell=True, creationflags=subprocess.CREATE_NO_WINDOW)
 
