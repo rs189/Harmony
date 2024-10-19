@@ -2,6 +2,7 @@
     "vm": "win10-vr",
     "name": "VRChat",
     "splash": "vrchat.png",
+    "splash-colour": "black",
     "mainexe": "VRChat.exe",
     "alwaysontop": false,
     "exes": [

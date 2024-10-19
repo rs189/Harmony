@@ -13,7 +13,7 @@ import time
 from common import HarmonyAppCommon
 from flask import Flask, request
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, GLib
+from gi.repository import Gtk, Gdk, GLib
 from hibernate import HarmonyAppHibernate
 from logger import Logger
 from requests.adapters import HTTPAdapter
@@ -63,25 +63,41 @@ class AppWindow(Gtk.ApplicationWindow):
         app_splash = app_config.get('splash')
         image_path = os.path.join(current_path, 'apps', app_splash)
         image = Gtk.Image.new_from_file(image_path)
-        fixed_container.put(image, 0, 0)  # Place image at (0, 0)
+        fixed_container.put(image, 0, 0) # Place image at (0, 0)
 
-        # Create the shadow label, this is not ideal
-        self.shadow_label = Gtk.Label()
-        self.shadow_label.set_markup('<span foreground="black" size="large"></span>')
-        self.shadow_label.set_sensitive(False)
-        self.shadow_label.set_margin_top(0)
-        self.shadow_label.set_margin_bottom(0)
+        self.app_splash_colour = app_config.get('splash-colour')
+        if not self.app_splash_colour:
+            self.app_splash_colour = 'white'
+
+        # Create a style provider
+        self.provider = Gtk.CssProvider().new()
+        try:
+            self.provider.load_from_data("""
+            * {
+                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            }
+            """.encode())
+            logger.log_to_file(f"[AppWindow] [Info] Loaded CSS successfully.")
+        except Exception as e:
+            logger.log_to_file(f"[AppWindow] [Error] Failed to load CSS: {e}")
+
+        # Apply the CSS to the window
+        Gtk.StyleContext.add_provider_for_screen(
+            Gdk.Screen.get_default(),
+            self.provider,
+            Gtk.STYLE_PROVIDER_PRIORITY_USER
+        )
 
         # Create the main label
         self.label = Gtk.Label()
-        self.label.set_markup('<span foreground="white" size="large"></span>')
+        self.label.set_markup(f'<span foreground="{self.app_splash_colour}" size="medium"></span>')
+        self.label.set_name('drop-shadow')
         self.label.set_sensitive(False)
         self.label.set_margin_top(0)
         self.label.set_margin_bottom(0)
 
         # Overlay the labels at the bottom left corner of the image
-        fixed_container.put(self.shadow_label, 15, 415)
-        fixed_container.put(self.label, 15, 415)
+        fixed_container.put(self.label, 15, 422)
 
         self.lg_ready = False
 
@@ -96,8 +112,7 @@ class AppWindow(Gtk.ApplicationWindow):
         
     def update_label(self, new_text):
         # Use GLib.idle_add to ensure thread-safe updates to the labels
-        GLib.idle_add(self.label.set_markup, f'<span foreground="white" size="large">{new_text}</span>')
-        GLib.idle_add(self.shadow_label.set_markup, f'<span foreground="black" size="large">{new_text}</span>')
+        GLib.idle_add(self.label.set_markup, f'<span foreground="{self.app_splash_colour}" size="medium">{new_text}</span>')
 
 app_name = app_config.get('name')
 
@@ -222,7 +237,8 @@ class HarmonyApp():
                     other_mainexe = other_app_config.get('mainexe')
                     self.killexes += f' "{other_mainexe}"'
 
-        app_command = f'pythonw.exe ../app.py -app "{self.command}" -mainexe {self.mainexe} -alwaysontop {self.alwaysontop} -exes {self.exes} -killexes {self.killexes} -delay {self.delay}'
+        app_command = f'pythonw.exe ../app.py -app "{self.command}" -mainexe "{self.mainexe}" -alwaysontop {self.alwaysontop} -exes {self.exes} -killexes {self.killexes} -delay {self.delay}'
+        logger.log_to_file(f'[HarmonyApp] [Info] Sending command to start app {app_name}: {app_command}')
         try:
             #response = requests.post(url, data={'command': app_command}, timeout=10)
             response = self.common.requests_retry_session().post(url, data={'command': app_command}, timeout=10)

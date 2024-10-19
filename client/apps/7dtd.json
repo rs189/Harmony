@@ -2,6 +2,7 @@
     "vm": "win10-games",
     "name": "7 Days To Die",
     "splash": "7dtd.png",
+    "splash-colour": "black",
     "mainexe": "7DaysToDie.exe",
     "alwaysontop": true,
     "exes": [

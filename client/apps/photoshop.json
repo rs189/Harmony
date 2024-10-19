@@ -1,14 +1,14 @@
 {
     "vm": "win10-gpu-software",
     "name": "Adobe Photoshop",
-    "splash": "default.png",
+    "splash": "photoshop.png",
+    "splash-colour": "black",
     "mainexe": "Photoshop.exe",
     "alwaysontop": false,
     "exes": [
         "Photoshop.exe"
     ],
     "killexes": [
-        "explorer.exe"
     ],
     "usb_devices": [
     ],
