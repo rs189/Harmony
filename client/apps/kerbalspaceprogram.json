@@ -1,0 +1,20 @@
+{
+    "vm": "win10-games",
+    "name": "Kerbal Space Program",
+    "splash": "kerbalspaceprogram.png",
+    "splash-colour": "black",
+    "mainexe": "KSP_x64.exe",
+    "alwaysontop": true,
+    "exes": [
+        "KSP_x64.exe"
+    ],
+    "killexes": [
+        "explorer.exe"
+    ],
+    "usb_devices": [
+    ],
+    "command": "steam://rungameid/220200",
+    "delay": 1,
+    "timeout": 300
+  }
+  

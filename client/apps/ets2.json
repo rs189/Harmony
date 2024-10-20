@@ -2,6 +2,7 @@
     "vm": "win10-games",
     "name": "Euro Truck Simulator 2",
     "splash": "ets2.png",
+    "splash-colour": "black",
     "mainexe": "eurotrucks2.exe",
     "alwaysontop": false,
     "exes": [

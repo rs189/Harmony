@@ -1,0 +1,19 @@
+{
+    "vm": "win10-gpu-software",
+    "name": "Adobe Premiere Pro",
+    "splash": "premierepro.png",
+    "splash-colour": "black",
+    "mainexe": "Adobe Premiere Pro.exe",
+    "alwaysontop": false,
+    "exes": [
+        "Adobe Premiere Pro.exe"
+    ],
+    "killexes": [
+    ],
+    "usb_devices": [
+    ],
+    "command": "C:\\Program Files\\Adobe\\Adobe Premiere Pro 2024\\Adobe Premiere Pro.exe",
+    "delay": 0,
+    "timeout": 300
+  }
+  

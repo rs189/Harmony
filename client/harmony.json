@@ -11,7 +11,7 @@
         "wayland:warpSupport=no",
         "audio:micShowIndicator=no", 
         "audio:micDefault=allow",
-        "spice:captureOnStart=yes",
+        "spice:captureOnStart=no",
         "input:captureOnFocus=yes",
         "input:grabKeyboard=no"
     ],
