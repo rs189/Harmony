@@ -316,6 +316,10 @@ class HarmonyHost():
         sys.exit(1)
 
     def run(self):
+        # Kill looking-glass-host.exe
+        if self.are_processes_running(['looking-glass-host.exe']):
+            self.kill_process('looking-glass-host.exe')
+
         if not self.are_processes_running(args.exes):
             if args.app.startswith('steam://'):
                 command = f'start {args.app}'
