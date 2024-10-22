@@ -1,0 +1,20 @@
+{
+    "vm": "win10-games",
+    "name": "Fall Guys",
+    "splash": "fallguys.png",
+    "splash-colour": "white",
+    "mainexe": "FallGuys_client_game.exe",
+    "alwaysontop": false,
+    "exes": [
+        "FallGuys_client_game.exe"
+    ],
+    "killexes": [
+        "explorer.exe"
+    ],
+    "usb_devices": [
+    ],
+    "command": "com.epicgames.launcher://apps/50118b7f954e450f8823df1614b24e80%3A38ec4849ea4f4de6aa7b6fb0f2d278e1%3A0a2d9f6403244d12969e11da6713137b?action=launch&silent=true",
+    "delay": 2,
+    "timeout": 300
+  }
+  

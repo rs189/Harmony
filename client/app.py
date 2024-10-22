@@ -10,7 +10,7 @@ import sys
 import threading
 import time
 
-from common import HarmonyAppCommon
+from common import HarmonyCommon
 from flask import Flask, request
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gdk, GLib
@@ -195,7 +195,7 @@ class HarmonyApp():
 
         self.delay = app_config.get('delay', 0)
 
-        self.common = HarmonyAppCommon()
+        self.common = HarmonyCommon()
         self.hibernate = HarmonyAppHibernate()
         self.usb = HarmonyAppUsb(self.app_vm, self.usb_devices)
 

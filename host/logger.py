@@ -1,9 +1,10 @@
 class Logger:
-    def __init__(self, log_file):
+    def __init__(self, log_file, clear=True):
         self.log_file = log_file
-        with open(self.log_file, 'w') as f:
-            f.write('')
-
+        if clear:
+            with open(self.log_file, 'w') as f:
+                f.write('')
+                
     def log_to_file(self, message, exception=None):
         if exception:
             print(message, exception)

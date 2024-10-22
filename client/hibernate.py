@@ -7,7 +7,7 @@ import subprocess
 import sys
 import time
 
-from common import HarmonyAppCommon
+from common import HarmonyCommon
 from logger import Logger
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
@@ -17,7 +17,7 @@ logger = Logger(os.path.join(current_path, 'hibernate.log'))
 
 class HarmonyAppHibernate():
     def __init__(self):
-        self.common = HarmonyAppCommon()
+        self.common = HarmonyCommon()
 
     def hibernate_vm(self, vm_name):
         logger.log_to_file(f'[HarmonyAppHibernate] [Info] Sending the hibernate command to the target VM {vm_name}.')

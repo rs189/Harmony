@@ -5,6 +5,7 @@ import subprocess
 import threading
 import time
 
+from common import HarmonyCommon
 from flask import Flask, request
 from logger import Logger
 
@@ -30,6 +31,29 @@ def run_command_after_delay(command, delay=0.1):
         subprocess.run(command, shell=True)
     except subprocess.CalledProcessError as e:
         print(f"Error running command: {e}")
+
+common = HarmonyCommon()
+
+def lg_watcher():
+    global last_keepalive_time
+    while True:
+        if not common.are_processes_running(['looking-glass-host.exe']):
+            # Check if no keep alive within last 10 seconds
+            if time.time() - last_keepalive_time > 10:
+                lg_path = harmony_config.get('looking-glass-path')
+                if not lg_path:
+                    logger.log_to_file(f"[LG Watcher] [Error] Looking Glass path not found.")
+                    sys.exit(1)
+                lg_path = os.path.expanduser(lg_path)
+
+                cmd = f'start /realTime "" "{lg_path}"'
+                subprocess.Popen(
+                    cmd,
+                    creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP,
+                    close_fds=True,
+                    shell=True
+                )
+        time.sleep(1)
 
 def keepalive_watcher():
     keepalive_timeout = harmony_config.get('keepalive_timeout', 60)
@@ -90,6 +114,8 @@ def set_console_non_topmost():
 
 if __name__ == '__main__':
     set_console_non_topmost() # Set console window as non-topmost
+    lg_watcher_thread = threading.Thread(target=lg_watcher, daemon=True)
+    lg_watcher_thread.start()
     listener = HarmonyListener(__name__)
     harmony_port = int(harmony_config.get('port', 5000))
     listener.run(host='0.0.0.0', port=harmony_port)

@@ -19,6 +19,7 @@ def is_admin():
     except:
         return False
 
+from common import HarmonyCommon
 from logger import Logger
 
 parser = argparse.ArgumentParser()
@@ -78,29 +79,8 @@ class TkWindow:
 
 class HarmonyHost():
     def __init__(self):
-        pass
+        self.common = HarmonyCommon()
     
-    def are_processes_running(self, processes):
-        for process in processes:
-            logger.log_to_file(f'[HarmonyHost] [Info] Checking if {process} is running...')
-            command = f'tasklist /FI "IMAGENAME eq {process}"'
-
-            result = subprocess.run(command, shell=True, capture_output=True, text=True)
-            # Check if the process name is in the output
-            if process in result.stdout:
-                logger.log_to_file(f'[HarmonyHost] [Info] The {process} is running...')
-                return True
-            if result.returncode != 0:
-                logger.log_to_file(f'[HarmonyHost] [Error] Error checking {process}: {result.stderr.strip()}')
-        return False
-
-    def kill_process(self, process):
-        try:
-            subprocess.run(f'taskkill /F /IM {process}', shell=True)
-            logger.log_to_file(f'[HarmonyHost] [Info] Killed process {process}')
-        except Exception as e:
-            logger.log_to_file(f'[HarmonyHost] [Error] Failed to kill process {process}: {e}')
-
     def find_hwnd_from_process(self, process):
         for proc in psutil.process_iter(['pid', 'name']):
             if proc.info['name'] == process:
@@ -189,7 +169,7 @@ class HarmonyHost():
         timeout = 100
         elapsed = 0
         interval = 1
-        while not self.are_processes_running([args.mainexe]):
+        while not self.common.are_processes_running([args.mainexe]):
             time.sleep(interval)
             elapsed += interval
             if elapsed >= timeout:
@@ -244,7 +224,7 @@ class HarmonyHost():
 
         try:
             logger.log_to_file(f"[HarmonyHost] [Info] Bringing the main window to the foreground...")
-            if self.are_processes_running([args.mainexe]):
+            if self.common.are_processes_running([args.mainexe]):
                 hwnds = self.find_hwnds_from_process(args.mainexe)
                 if hwnds:
                     for hwnd in hwnds: # Loop through each window handle
@@ -279,7 +259,7 @@ class HarmonyHost():
             keepalive_interval = 5
             last_keepalive_time = time.time()
             harmony_port = int(harmony_config.get('port', 5000))
-            while self.are_processes_running([args.mainexe]):
+            while self.common.are_processes_running([args.mainexe]):
                 time.sleep(monitor_interval)
 
                 if time.time() - last_keepalive_time >= keepalive_interval:
@@ -292,7 +272,7 @@ class HarmonyHost():
             
                     last_keepalive_time = time.time()  # Reset the keepalive timer
 
-            logger.log_to_file(f"[HarmonyHost] [Info] Sending the termination signal, mainexe running: {str(self.are_processes_running([args.mainexe]))}")
+            logger.log_to_file(f"[HarmonyHost] [Info] Sending the termination signal, mainexe running: {str(self.common.are_processes_running([args.mainexe]))}")
             request_address = 'http://' + host_ip + ':' + str(host_port) + '/terminate'
             try:
                 response = requests.get(request_address)
@@ -317,11 +297,11 @@ class HarmonyHost():
 
     def run(self):
         # Kill looking-glass-host.exe
-        if self.are_processes_running(['looking-glass-host.exe']):
-            self.kill_process('looking-glass-host.exe')
+        if self.common.are_processes_running(['looking-glass-host.exe']):
+            self.common.kill_process('looking-glass-host.exe')
 
-        if not self.are_processes_running(args.exes):
-            if args.app.startswith('steam://'):
+        if not self.common.are_processes_running(args.exes):
+            if args.app.startswith('steam://') or args.app.startswith('com.epicgames.launcher://'):
                 command = f'start {args.app}'
             else:
                 command = args.app
@@ -329,13 +309,13 @@ class HarmonyHost():
             subprocess.Popen(command, shell=True, creationflags=subprocess.CREATE_NO_WINDOW)
 
         # Kill the processes specified
-        if self.are_processes_running(args.killexes):
+        if self.common.are_processes_running(args.killexes):
             for process in args.killexes:
-                self.kill_process(process)
+                self.common.kill_process(process)
 
         minimise_processes = harmony_config.get('minimise-processes', [])
         for process in minimise_processes:
-            if self.are_processes_running([process]):
+            if self.common.are_processes_running([process]):
                 logger.log_to_file(f"[HarmonyHost] [Info] Found running process to minimise: {process}")
                 hwnds = self.find_hwnds_from_process(process) # Get all window handles for the process
                 if hwnds:
@@ -348,17 +328,16 @@ class HarmonyHost():
                 else:
                     logger.log_to_file(f"[HarmonyHost] [Info] No windows found for process: {process}")
 
-        if not self.are_processes_running(['looking-glass-host.exe']):
+        if not self.common.are_processes_running(['looking-glass-host.exe']):
             lg_path = harmony_config.get('looking-glass-path')
             if not lg_path:
                 logger.log_to_file(f"[HarmonyHost] [Error] Looking Glass path not found.")
                 sys.exit(1)
             lg_path = os.path.expanduser(lg_path)
-            logger.log_to_file("lg path")
-            logger.log_to_file(lg_path)  
-
+            
+            cmd = f'start /realTime "" "{lg_path}"'
             subprocess.Popen(
-                lg_path,
+                cmd,
                 creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP,
                 close_fds=True,
                 shell=True

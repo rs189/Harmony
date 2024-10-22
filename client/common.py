@@ -12,7 +12,7 @@ from requests.packages.urllib3.util.retry import Retry
 current_path = os.path.dirname(os.path.realpath(__file__))
 logger = Logger(os.path.join(current_path, 'app.log'), False)
 
-class HarmonyAppCommon():
+class HarmonyCommon():
     def __init__(self):
         pass
 
@@ -36,7 +36,7 @@ class HarmonyAppCommon():
                 return ip_address
             time.sleep(interval)
             elapsed += interval
-        logger.log_to_file(f'[HarmonyAppCommon] [Error] No IP address found for the target VM {vm_name}.')
+        logger.log_to_file(f'[HarmonyCommon] [Error] No IP address found for the target VM {vm_name}.')
         sys.exit(1)
 
     def requests_retry_session(self,
