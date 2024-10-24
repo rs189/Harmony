@@ -1,0 +1,28 @@
+{
+    "vm": "win10-games",
+    "name": "Fall Guys",
+    "splash": "fallguys.jpg",
+    "colour": "#ef2f9d",
+    "mainexe": "FallGuys_client_game.exe",
+    "alwaysontop": true,
+    "exes": [
+        "FallGuys_client_game.exe",
+        "FallGuys_client.exe",
+        "FallGuysEACLauncher.exe",
+        "RunFallGuys.exe"
+    ],
+    "killexes": [
+        "explorer.exe"
+    ],
+    "usb_devices": [
+    ],
+    "client_command": "",
+    "command": "com.epicgames.launcher://apps/50118b7f954e450f8823df1614b24e80%3A38ec4849ea4f4de6aa7b6fb0f2d278e1%3A0a2d9f6403244d12969e11da6713137b?action=launch&silent=true",
+    "wait-for-easy-anti-cheat": true,
+    "create-black-window": true,
+    "monitor-process": true,
+    "delay": 2,
+    "terminate-on-disconnect": true,
+    "terminate-on-disconnect-timeout": 150,
+    "timeout": 300
+}
