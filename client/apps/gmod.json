@@ -19,5 +19,4 @@
     "monitor-process": true,
     "delay": 2,
     "timeout": 300
-  }
-  
+}

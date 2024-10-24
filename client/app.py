@@ -105,6 +105,8 @@ class HarmonyClient():
         self.create_black_window = app_config.get('create-black-window', True)
         self.monitor_process = app_config.get('monitor-process', True)
         self.delay = app_config.get('delay', 0)
+        self.terminate_on_disconnect = app_config.get('terminate-on-disconnect', False)
+        self.terminate_on_disconnect_timeout = app_config.get('terminate-on-disconnect-timeout', 60)
 
         self.common = HarmonyClientCommon()
         self.hibernate = HarmonyClientHibernate()
@@ -142,13 +144,28 @@ class HarmonyClient():
         exes = self.exes
         logger.log_to_file(f'[HarmonyClient] [Info] Sending command to cancel start app {app_name}: {exes}')
         try:
-            response = self.common.requests_retry_session().post(url, data={'exes': exes}, timeout=10)
+            response = self.common.requests_retry_session(retries=2).post(url, data={'exes': exes}, timeout=10)
             logger.log_to_file(f'[HarmonyClient] [Info] Cancel start app {app_name} response from server: ', response.text)
             process = subprocess.Popen(['kill', str(os.getpid())])
             sys.exit(1)
         except requests.exceptions.Timeout:
             logger.log_to_file(f'[HarmonyClient] [Error] Request timed out trying to cancel start app {app_name}')
             process = subprocess.Popen(['kill', str(os.getpid())])
+            sys.exit(1)
+    
+    def announce_terminate_on_disconnect(self):
+        ip_address = self.common.get_vm_ip(self.app_vm)
+        if not ip_address:
+            logger.log_to_file(f'[HarmonyClient] [Error] No IP address found for the target VM {self.app_vm}.')
+            sys.exit(1)
+        url = 'http://' + ip_address + ':5000/disconnected'
+        exes = self.exes
+        logger.log_to_file(f'[HarmonyClient] [Info] Announcing termination on disconnect to server...')
+        try:
+            response = self.common.requests_retry_session(retries=2).post(url, data={'exes': exes, 'timeout': self.terminate_on_disconnect_timeout}, timeout=10)
+            logger.log_to_file(f'[HarmonyClient] [Info] Announce termination on disconnect response from server: ', response.text)
+        except requests.exceptions.Timeout:
+            logger.log_to_file(f'[HarmonyClient] [Error] Request timed out trying to announce termination on disconnect')
             sys.exit(1)
 
     def stop_app(self):
@@ -167,7 +184,7 @@ class HarmonyClient():
                         exes += ' ' + ' '.join([f'"{exe}"' for exe in other_exes])
         logger.log_to_file(f'[HarmonyClient] [Info] Sending command to stop app {app_name}: {exes}')
         try:
-            response = self.common.requests_retry_session().post(url, data={'exes': exes}, timeout=10)
+            response = self.common.requests_retry_session(retries=2).post(url, data={'exes': exes}, timeout=10)
             logger.log_to_file(f'[HarmonyClient] [Info] Stop app {app_name} response from server: ', response.text)
             process = subprocess.Popen(['kill', str(os.getpid())])
             sys.exit(1)
@@ -257,6 +274,11 @@ class HarmonyClient():
                 subprocess.run(self.client_undo_command, shell=True)
 
             logger.log_to_file(f"[HarmonyClient] [Info] Looking Glass terminated with exit code {process.returncode}")
+
+            if self.terminate_on_disconnect:
+                self.announce_terminate_on_disconnect()
+
+            process = subprocess.Popen(['kill', str(os.getpid())])
             _thread.interrupt_main()
         except Exception as e:
             logger.log_to_file(f"[HarmonyClient] [Error] Error launching Looking Glass: {e}")

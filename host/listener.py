@@ -25,6 +25,8 @@ with open(harmony_config_path, 'r') as f:
 last_keepalive_time = time.time()
 watcher_thread = None
 thread_lock = threading.Lock()
+disconnect_watcher_thread = None
+disconnect_thread_lock = threading.Lock()
 
 def run_command_after_delay(command, delay=0.1):
     time.sleep(delay)
@@ -68,6 +70,16 @@ def keepalive_watcher():
         print("Keepalive watcher alive.")
         time.sleep(1)  # Check every second
 
+def disconnect_watcher(exes, timeout):
+    print(f"Disconnecting in {timeout} seconds.")
+    time.sleep(timeout)
+    print("Timeout received, disconnecting.")
+    common.kill_process('pythonw.exe')
+    exe_list = shlex.split(exes)
+    for exe in exe_list:
+        print(f"Killing process: {exe}")
+        common.kill_process(exe)
+
 # Check if watcher thread is alive
 def is_thread_alive(thread):
     return thread is not None and thread.is_alive()
@@ -96,23 +108,41 @@ class HarmonyHostListener(Flask):
             exes = request.form.get('exes')
             print("Cancelling the command with exes: ", exes)
             # Cancel the command by killing the process
-            common.kill_process(['pythonw.exe'])
+            common.kill_process('pythonw.exe')
             exe_list = shlex.split(exes)
             for exe in exe_list:
                 print(f"Killing process: {exe}")
-                common.kill_process([exe])
+                common.kill_process(exe)
             return 'Cancelled'
+
+        @self.route('/disconnected', methods=['POST'])
+        def disconnected():
+            global disconnect_watcher_thread
+            timeout = request.form.get('timeout')
+            exes = request.form.get('exes')
+            print(f"Disconnecting with timeout: {timeout}, exes: {exes}")
+            with disconnect_thread_lock:
+                if not (disconnect_watcher_thread and disconnect_watcher_thread.is_alive()):
+                    disconnect_watcher_thread = threading.Thread(target=disconnect_watcher, args=(exes, int(timeout)), daemon=True)
+                    disconnect_watcher_thread.start()
+                else:
+                    print("Disconnect watcher thread is already running.")
+                    # Wait for the existing thread to finish and then start a new one
+                    disconnect_watcher_thread.join()
+                    disconnect_watcher_thread = threading.Thread(target=disconnect_watcher, args=(exes, int(timeout)), daemon=True)
+                    disconnect_watcher_thread.start()
+            return f"Disconnected. Timeout: {timeout}"
 
         @self.route('/stop', methods=['POST'])
         def stop_command():
             exes = request.form.get('exes')
             print("Stopping the command with exes: ", exes)
             # Stop the command by killing the process
-            common.kill_process(['pythonw.exe'])
+            common.kill_process('pythonw.exe')
             exe_list = shlex.split(exes)
             for exe in exe_list:
                 print(f"Killing process: {exe}")
-                common.kill_process([exe])
+                common.kill_process(exe)
             return 'Stopped'
 
         @self.route('/keepalive', methods=['GET'])

@@ -21,6 +21,7 @@
     "create-black-window": true,
     "monitor-process": true,
     "delay": 2,
+    "terminate-on-disconnect": true,
+    "terminate-on-disconnect-timeout": 150,
     "timeout": 300
-  }
-  
+}
