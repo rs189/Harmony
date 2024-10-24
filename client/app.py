@@ -66,7 +66,7 @@ class HarmonyLauncher(Gtk.Application):
 
     def do_activate(self):
         if not self.window:
-            self.window = HarmonyLauncherWindow(application=self)
+            self.window = HarmonyLauncherWindow(application=self, title=self.app_name)
 
             harmony_app = HarmonyClient()
             self.harmony_client = harmony_app
