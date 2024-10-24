@@ -15,6 +15,7 @@
     "usb_devices": [
     ],
     "client_command": "",
+    "client_undo_command": "",
     "command": "steam://rungameid/220200",
     "wait-for-easy-anti-cheat": false,
     "create-black-window": true,
