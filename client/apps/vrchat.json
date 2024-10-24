@@ -1,8 +1,8 @@
 {
     "vm": "win10-vr",
     "name": "VRChat",
-    "splash": "vrchat.png",
-    "splash-colour": "black",
+    "splash": "vrchat.jpg",
+    "colour": "#ffffff",
     "mainexe": "VRChat.exe",
     "alwaysontop": false,
     "exes": [
@@ -19,7 +19,12 @@
         "Valve Software Valve VR Radio & HMD Mic",
         "Valve Software 3D Camera"
     ],
+    "client_command": "systemctl --user restart sunshine",
+    "client_undo_command": "",
     "command": "steam://rungameid/438100",
+    "wait-for-easy-anti-cheat": true,
+    "create-black-window": false,
+    "monitor-process": false,
     "delay": 2,
     "timeout": 300
   }

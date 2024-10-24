@@ -1,2 +1,7 @@
+@echo off
 cd /d "%~dp0python"
-start python.exe "%~dp0listener.py"
+
+echo Starting Harmony Host Listener
+echo ---
+
+elevate -c python.exe ..\listener.py

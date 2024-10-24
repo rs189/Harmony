@@ -80,7 +80,7 @@ Then copy the `.desktop` file created inside of `~/.local/share/applications`
 * ~~Live USB Host Device monitoring.~~
 * GPU power saving mode when the Harmony/Looking Glass window is closed.
 * ~~Automatic suspend after a period of inactivity.~~
-* Automatic GPU binding and unbinding in the host.
+* ~~Automatic GPU binding and unbinding in the host.~~ (Can be done using your own setup with `client_command` and `client_undo_command`)
 * Discord Rich Presence.
 * Implementation for other software other than games.
 

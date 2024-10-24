@@ -9,7 +9,7 @@ from logger import Logger
 current_path = os.path.dirname(os.path.realpath(__file__))
 logger = Logger(os.path.join(current_path, 'app.log'), False)
 
-class HarmonyAppUsb:
+class HarmonyClientUsb:
     def __init__(self, app_vm, usb_devices):
         self.app_vm = app_vm
         self.usb_devices = usb_devices
@@ -19,7 +19,7 @@ class HarmonyAppUsb:
         with open(xml_file, 'w') as file:
             file.write('')
         subprocess.check_output(f'virsh dumpxml {self.app_vm} > {xml_file}', shell=True, text=True)
-        logger.log_to_file(f'[HarmonyApp] [Info] Dumped XML to {xml_file}')
+        logger.log_to_file(f'[HarmonyClientUsb] [Info] Dumped XML to {xml_file}')
         with open(xml_file, 'r+') as file:
             content = file.read()
             content = re.sub(r'<hostdev mode=.subsystem. type=.usb. managed=.yes.>.*?</hostdev>', '', content, flags=re.DOTALL)
@@ -34,9 +34,8 @@ class HarmonyAppUsb:
             output = subprocess.check_output(['lsusb'], text=True)
             matching_devices = []
 
-            logger.log_to_file("All USB devices:")
+            logger.log_to_file("[HarmonyClientUsb] [Info] All USB devices:")
             for line in output.splitlines():
-                #logger.log_to_file(line)
                 if device_name.lower() in line.lower():
                     match = re.search(r'Bus (\d+) Device (\d+): ID (\w+):(\w+)\s*(.*)', line)
                     if match:
@@ -49,22 +48,18 @@ class HarmonyAppUsb:
                             'product': product.strip()
                         })
 
-            logger.log_to_file(f"Matching devices for '{device_name}':")
+            logger.log_to_file(f"[HarmonyClientUsb] [Info] Matching devices for '{device_name}':")
             for device in matching_devices:
-                logger.log_to_file(f"  Bus {device['bus']}, Device {device['device']}: ID {device['vendor_id']}:{device['product_id']} ({device['product']})")
+                logger.log_to_file(f"[HarmonyClientUsb] [Info] Bus {device['bus']}, Device {device['device']}: ID {device['vendor_id']}:{device['product_id']} ({device['product']})")
 
             return matching_devices
         except subprocess.CalledProcessError as e:
-            logger.log_to_file(f"Error finding USB devices: {str(e)}")
+            logger.log_to_file(f"[HarmonyClientUsb] [Error] Error finding USB devices: {str(e)}")
 
     def update_vm_usb(self, device_name, command):
         matching_devices = self.find_device_info(device_name)
         if not matching_devices:
-            logger.log_to_file(f"Could not find any devices matching '{device_name}'")
-    
-        logger.log_to_file(f"Found {len(matching_devices)} matching devices:")
-        for device in matching_devices:
-            logger.log_to_file(f"  Bus {device['bus']}, Device {device['device']}: ID {device['vendor_id']}:{device['product_id']} ({device['product']})")
+            logger.log_to_file(f"[HarmonyClientUsb] [Error] Could not find any devices matching '{device_name}'")
     
         for device in matching_devices:
             # XML template for the USB device
@@ -77,18 +72,18 @@ class HarmonyAppUsb:
               </source>
             </hostdev>
             """
-            logger.log_to_file(f"Running virsh {command} {self.app_vm} for USB device: {device['vendor_id']}:{device['product_id']} (Bus {device['bus']}, Device {device['device']})")
+            logger.log_to_file(f"[HarmonyClientUsb] [Info] Running virsh {command} {self.app_vm} for USB device: {device['vendor_id']}:{device['product_id']} (Bus {device['bus']}, Device {device['device']})")
             process = subprocess.run(
-                ['virsh',command, self.app_vm, '/dev/stdin', '--persistent'],
+                ['virsh', command, self.app_vm, '/dev/stdin', '--persistent'],
                 input=xml,
                 text=True,
                 capture_output=True
             )
             if process.returncode != 0:
-                logger.log_to_file(f"Error running virsh command: {command}")
-                logger.log_to_file(f"Error output: {process.stderr}")
+                logger.log_to_file(f"[HarmonyClientUsb] [Error] Error running virsh command: {command}")
+                logger.log_to_file(f"[HarmonyClientUsb] [Error] Error output: {process.stderr}")
             else:
-                logger.log_to_file(f"Successfully {command}ed device {device['vendor_id']}:{device['product_id']} (Bus {device['bus']}, Device {device['device']})")
+                logger.log_to_file(f"[HarmonyClientUsb] [Info] Successfully ran virsh {command} {self.app_vm} for USB device: {device['vendor_id']}:{device['product_id']} (Bus {device['bus']}, Device {device['device']})")
 
     def monitor_usb_changes(self):
         if not self.usb_devices or (len(self.usb_devices) == 1 and self.usb_devices[0] == ""):
@@ -110,7 +105,7 @@ class HarmonyAppUsb:
 
         # Dump the current XML configuration of the VM
         subprocess.check_output(f'virsh dumpxml {self.app_vm} > {xml_file}', shell=True, text=True)
-        logger.log_to_file(f'[HarmonyApp] [Info] Dumped XML to {xml_file}')
+        logger.log_to_file(f'[HarmonyClientUsb] [Info] Dumped XML to {xml_file}')
 
         # Read the XML file and find USB host devices
         with open(xml_file, 'r') as file:
@@ -140,7 +135,7 @@ class HarmonyAppUsb:
         return attached_devices
 
     def handle_usb_addition(self):
-        logger.log_to_file("Detected addition of USB device.")
+        logger.log_to_file("[HarmonyClientUsb] [Info] Detected addition of USB device.")
         for usb_device in self.usb_devices:
             self.update_vm_usb(usb_device, 'attach-device')
 
@@ -161,7 +156,7 @@ class HarmonyAppUsb:
 </hostdev>
         """
 
-        logger.log_to_file(f"Running virsh detach-device for USB device: {vendor_id}:{product_id} (Bus {bus}, Device {device_number})")
+        logger.log_to_file(f"[HarmonyClientUsb] [Info] Running virsh detach-device for USB device: {vendor_id}:{product_id} (Bus {bus}, Device {device_number})")
         
         process = subprocess.run(
             ['virsh', 'detach-device', self.app_vm, '/dev/stdin', '--persistent'],
@@ -170,20 +165,19 @@ class HarmonyAppUsb:
             capture_output=True
         )
         if process.returncode != 0:
-            logger.log_to_file(f"Error detaching device {vendor_id}:{product_id}: {process.stderr}")
+            logger.log_to_file(f"[HarmonyClientUsb] [Error] Error detaching device {vendor_id}:{product_id}: {process.stderr}")
         else:
-            logger.log_to_file(f"Successfully detached device {vendor_id}:{product_id} (Bus {bus}, Device {device_number}).")
+            logger.log_to_file(f"[HarmonyClientUsb] [Info] Successfully detached device {vendor_id}:{product_id} (Bus {bus}, Device {device_number}).")
 
     def handle_usb_removal(self):
-        logger.log_to_file("Detected removal of USB device.")
+        logger.log_to_file("[HarmonyClientUsb] [Info] Detected removal of USB device.")
 
-        # Step 1: List all USB devices currently in use by the VM
+        # List all USB devices currently in use by the VM
         attached_devices = self.get_attached_usb_devices()
 
-        # Step 4: Detach invalid devices
+        # Detach invalid devices
         for device_name in attached_devices:
-            logger.log_to_file(f"Detaching USB device: {device_name}")
-            # Construct XML for detaching the device
+            logger.log_to_file(f"[HarmonyClientUsb] [Info] Detaching USB device: {device_name}")
             self.detach_usb_device(device_name)
 
         for usb_device in self.usb_devices:

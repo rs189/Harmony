@@ -1,19 +1,25 @@
 {
     "vm": "win10-games",
     "name": "Grand Theft Auto V",
-    "splash": "gta5.png",
-    "splash-colour": "black",
+    "splash": "gta5.jpg",
+    "colour": "#088e22",
     "mainexe": "GTA5.exe",
-    "alwaysontop": false,
+    "alwaysontop": true,
     "exes": [
-        "GTA5.exe"
+        "GTA5.exe",
+        "GTA5_BE.exe",
+        "PlayGTAV.exe"
     ],
     "killexes": [
         "explorer.exe"
     ],
     "usb_devices": [
     ],
+    "client_command": "",
     "command": "com.epicgames.launcher://apps/0584d2013f0149a791e7b9bad0eec102%3A6e563a2c0f5f46e3b4e88b5f4ed50cca%3A9d2d0eb64d5c44529cece33fe2a46482?action=launch&silent=true",
+    "wait-for-easy-anti-cheat": false,
+    "create-black-window": true,
+    "monitor-process": true,
     "delay": 2,
     "timeout": 300
   }

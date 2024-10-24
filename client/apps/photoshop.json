@@ -1,8 +1,8 @@
 {
     "vm": "win10-gpu-software",
     "name": "Adobe Photoshop",
-    "splash": "photoshop.png",
-    "splash-colour": "black",
+    "splash": "photoshop.jpg",
+    "colour": "#31a7ff",
     "mainexe": "Photoshop.exe",
     "alwaysontop": false,
     "exes": [
@@ -12,7 +12,11 @@
     ],
     "usb_devices": [
     ],
+    "client_command": "",
     "command": "C:\\Program Files\\Adobe\\Adobe Photoshop 2024\\Photoshop.exe",
+    "wait-for-easy-anti-cheat": false,
+    "create-black-window": false,
+    "monitor-process": true,
     "delay": 0,
     "timeout": 300
   }

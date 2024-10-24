@@ -1,10 +1,10 @@
 {
     "vm": "win10-games",
     "name": "Euro Truck Simulator 2",
-    "splash": "ets2.png",
-    "splash-colour": "black",
+    "splash": "ets2.jpg",
+    "colour": "#f3e679",
     "mainexe": "eurotrucks2.exe",
-    "alwaysontop": false,
+    "alwaysontop": true,
     "exes": [
         "eurotrucks2.exe"
     ],
@@ -16,6 +16,9 @@
         "Logitech, Inc. G29 Driving Force Racing Wheel [PS3]"
     ],
     "command": "steam://rungameid/227300",
+    "wait-for-easy-anti-cheat": false,
+    "create-black-window": true,
+    "monitor-process": true,
     "delay": 2,
     "timeout": 300
   }

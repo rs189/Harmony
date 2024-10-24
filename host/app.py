@@ -13,13 +13,7 @@ import win32con
 import win32gui
 import win32process
 
-def is_admin():
-    try:
-        return ctypes.windll.shell32.IsUserAnAdmin()
-    except:
-        return False
-
-from common import HarmonyCommon
+from common import HarmonyHostCommon
 from logger import Logger
 
 parser = argparse.ArgumentParser()
@@ -28,6 +22,9 @@ parser.add_argument('-mainexe', type=str, required=True)
 parser.add_argument('-alwaysontop', type=str, default='False')
 parser.add_argument('-exes', type=str, nargs='+', required=True)
 parser.add_argument('-killexes', type=str, nargs='+', required=True)
+parser.add_argument('-waitforeac', type=str, default='True')
+parser.add_argument('-createblackwindow', type=str, default='True')
+parser.add_argument('-monitorprocess', type=str, default='True')
 parser.add_argument('-delay', type=str, required=False)
 args = parser.parse_args()
 
@@ -79,7 +76,7 @@ class TkWindow:
 
 class HarmonyHost():
     def __init__(self):
-        self.common = HarmonyCommon()
+        self.common = HarmonyHostCommon()
     
     def find_hwnd_from_process(self, process):
         for proc in psutil.process_iter(['pid', 'name']):
@@ -158,8 +155,7 @@ class HarmonyHost():
 
     def wait_host_ready(self):
         # Create a black window to cover up the desktop
-        create_black_window = harmony_config.get('create-black-window')
-        if str(create_black_window).lower() == 'true':
+        if str(args.createblackwindow).lower() == 'true':
             logger.log_to_file(f"[HarmonyHost] [Info] Creating the black window.")
             tk_window = TkWindow()
             tk_thread = threading.Thread(target=tk_window.run)
@@ -190,8 +186,7 @@ class HarmonyHost():
         logger.log_to_file(f"[HarmonyHost] [Info] The main application window is found.")
 
         # Optional, wait for the easy anti cheat launcher
-        wait_for_eac = harmony_config.get('wait-for-easy-anti-cheat')
-        if str(wait_for_eac).lower() == 'true':
+        if str(args.waitforeac).lower() == 'true':
             eac_timeout = 100
             eac_elapsed = 0
             eac_interval = 1
@@ -251,27 +246,25 @@ class HarmonyHost():
                 tk_thread.join()
             sys.exit(1)
 
+        monitor_interval = 0.2
+        keepalive_interval = 5
+        last_keepalive_time = time.time()
+        harmony_port = int(harmony_config.get('port', 5000))
+        while self.common.are_processes_running([args.mainexe]):
+            time.sleep(monitor_interval)
+            if time.time() - last_keepalive_time >= keepalive_interval:
+                keepalive_address = f'http://127.0.0.1:{harmony_port}/keepalive'
+                try:
+                    keepalive_response = requests.get(keepalive_address)
+                    logger.log_to_file(f"[HarmonyHost] [Info] Keepalive signal sent successfully: {keepalive_response.status_code}")
+                except Exception as e:
+                    logger.log_to_file(f"[HarmonyHost] [Error] Error sending the keepalive signal: {e}")
+        
+                last_keepalive_time = time.time()  # Reset the keepalive timer
+
         # Monitor the process 
         time.sleep(5)
-        monitor_process = harmony_config.get('monitor-process')
-        if str(monitor_process).lower() == 'true':
-            monitor_interval = 0.1
-            keepalive_interval = 5
-            last_keepalive_time = time.time()
-            harmony_port = int(harmony_config.get('port', 5000))
-            while self.common.are_processes_running([args.mainexe]):
-                time.sleep(monitor_interval)
-
-                if time.time() - last_keepalive_time >= keepalive_interval:
-                    keepalive_address = f'http://127.0.0.1:{harmony_port}/keepalive'
-                    try:
-                        keepalive_response = requests.get(keepalive_address)
-                        logger.log_to_file(f"[HarmonyHost] [Info] Keepalive signal sent successfully: {keepalive_response.status_code}")
-                    except Exception as e:
-                        logger.log_to_file(f"[HarmonyHost] [Error] Error sending the keepalive signal: {e}")
-            
-                    last_keepalive_time = time.time()  # Reset the keepalive timer
-
+        if str(args.monitorprocess).lower() == 'true':
             logger.log_to_file(f"[HarmonyHost] [Info] Sending the termination signal, mainexe running: {str(self.common.are_processes_running([args.mainexe]))}")
             request_address = 'http://' + host_ip + ':' + str(host_port) + '/terminate'
             try:
@@ -349,7 +342,7 @@ class HarmonyHost():
         self.wait_host_ready()
 
 if __name__ == '__main__':
-    if not is_admin():
+    if not HarmonyHostCommon.is_admin():
         # Re-run the script with admin privileges
         logger.log_to_file(f"Requesting administrative privileges...")
         ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, " ".join(sys.argv), None, 1)

@@ -1,11 +1,12 @@
 import ctypes
 import json
 import os
+import shlex
 import subprocess
 import threading
 import time
 
-from common import HarmonyCommon
+from common import HarmonyHostCommon
 from flask import Flask, request
 from logger import Logger
 
@@ -32,7 +33,7 @@ def run_command_after_delay(command, delay=0.1):
     except subprocess.CalledProcessError as e:
         print(f"Error running command: {e}")
 
-common = HarmonyCommon()
+common = HarmonyHostCommon()
 
 def lg_watcher():
     global last_keepalive_time
@@ -42,7 +43,7 @@ def lg_watcher():
             if time.time() - last_keepalive_time > 10:
                 lg_path = harmony_config.get('looking-glass-path')
                 if not lg_path:
-                    logger.log_to_file(f"[LG Watcher] [Error] Looking Glass path not found.")
+                    logger.log_to_file(f"[HarmonyHostListener] [Error] Looking Glass path not found.")
                     sys.exit(1)
                 lg_path = os.path.expanduser(lg_path)
 
@@ -72,13 +73,14 @@ def is_thread_alive(thread):
     return thread is not None and thread.is_alive()
 
 # Harmony listener
-class HarmonyListener(Flask):
+class HarmonyHostListener(Flask):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         @self.route('/execute', methods=['POST'])
         def execute_command():
             command = request.form.get('command')
+            print(f"Received command: {command}")
             if command:
                 # Inform the client that the command is about to run
                 response = f"Command '{command}' will be executed."
@@ -88,6 +90,30 @@ class HarmonyListener(Flask):
 
                 return response
             return 'No command provided.'
+
+        @self.route('/cancel', methods=['POST'])
+        def cancel_command():
+            exes = request.form.get('exes')
+            print("Cancelling the command with exes: ", exes)
+            # Cancel the command by killing the process
+            common.kill_process(['pythonw.exe'])
+            exe_list = shlex.split(exes)
+            for exe in exe_list:
+                print(f"Killing process: {exe}")
+                common.kill_process([exe])
+            return 'Cancelled'
+
+        @self.route('/stop', methods=['POST'])
+        def stop_command():
+            exes = request.form.get('exes')
+            print("Stopping the command with exes: ", exes)
+            # Stop the command by killing the process
+            common.kill_process(['pythonw.exe'])
+            exe_list = shlex.split(exes)
+            for exe in exe_list:
+                print(f"Killing process: {exe}")
+                common.kill_process([exe])
+            return 'Stopped'
 
         @self.route('/keepalive', methods=['GET'])
         def keep_alive():
@@ -116,6 +142,6 @@ if __name__ == '__main__':
     set_console_non_topmost() # Set console window as non-topmost
     lg_watcher_thread = threading.Thread(target=lg_watcher, daemon=True)
     lg_watcher_thread.start()
-    listener = HarmonyListener(__name__)
+    listener = HarmonyHostListener(__name__)
     harmony_port = int(harmony_config.get('port', 5000))
     listener.run(host='0.0.0.0', port=harmony_port)

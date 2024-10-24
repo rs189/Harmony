@@ -1,8 +1,8 @@
 {
     "vm": "win10-games",
     "name": "7 Days To Die",
-    "splash": "7dtd.png",
-    "splash-colour": "black",
+    "splash": "7dtd.jpg",
+    "colour": "#f30008",
     "mainexe": "7DaysToDie.exe",
     "alwaysontop": true,
     "exes": [
@@ -16,6 +16,9 @@
     "usb_devices": [
     ],
     "command": "steam://rungameid/251570",
+    "wait-for-easy-anti-cheat": true,
+    "create-black-window": true,
+    "monitor-process": true,
     "delay": 0,
     "timeout": 300
   }

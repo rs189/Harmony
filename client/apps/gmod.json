@@ -1,20 +1,19 @@
 {
     "vm": "win10-games",
-    "name": "Microsoft Flight Simulator",
-    "splash": "msfs.jpg",
-    "mainexe": "FlightSimulator.exe",
+    "name": "Garry's Mod",
+    "splash": "gmod.jpg",
+    "mainexe": "hl2.exe",
     "alwaysontop": true,
     "exes": [
-        "FlightSimulator.exe"
+        "hl2.exe"
     ],
     "killexes": [
         "explorer.exe"
     ],
     "usb_devices": [
-        "Saitek PLC Saitek X52 PRO Flight Control System"
     ],
     "client_command": "",
-    "command": "steam://rungameid/1250410",
+    "command": "steam://rungameid/4000",
     "wait-for-easy-anti-cheat": false,
     "create-black-window": true,
     "monitor-process": true,
