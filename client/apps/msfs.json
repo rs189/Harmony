@@ -14,6 +14,7 @@
         "Saitek PLC Saitek X52 PRO Flight Control System"
     ],
     "client_command": "",
+    "client_undo_command": "",
     "command": "steam://rungameid/1250410",
     "wait-for-easy-anti-cheat": false,
     "create-black-window": true,

@@ -28,26 +28,26 @@
 {
     "vm": "win10-games",
     "name": "Microsoft Flight Simulator",
-    "splash": "msfs.png",
+    "splash": "msfs.jpg",
     "mainexe": "FlightSimulator.exe",
     "alwaysontop": true,
     "exes": [
         "FlightSimulator.exe"
     ],
     "killexes": [
-        "explorer.exe",
-        "taskmgr.exe",
-        "msedge.exe",
-        "msedgewebview2.exe"
+        "explorer.exe"
     ],
     "usb_devices": [
         "Saitek PLC Saitek X52 PRO Flight Control System"
     ],
+    "client_command": "",
     "command": "steam://rungameid/1250410",
+    "wait-for-easy-anti-cheat": false,
+    "create-black-window": true,
+    "monitor-process": true,
     "delay": 2,
     "timeout": 300
-  }
-  
+}
 ```
 
 You can obtain the Steam App ID from either SteamDB or by creating a shortcut using the Steam client and copying the launch options.

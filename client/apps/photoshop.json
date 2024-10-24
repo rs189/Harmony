@@ -13,6 +13,7 @@
     "usb_devices": [
     ],
     "client_command": "",
+    "client_undo_command": "",
     "command": "C:\\Program Files\\Adobe\\Adobe Photoshop 2024\\Photoshop.exe",
     "wait-for-easy-anti-cheat": false,
     "create-black-window": false,

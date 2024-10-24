@@ -16,6 +16,7 @@
     "usb_devices": [
     ],
     "client_command": "",
+    "client_undo_command": "",
     "command": "com.epicgames.launcher://apps/0584d2013f0149a791e7b9bad0eec102%3A6e563a2c0f5f46e3b4e88b5f4ed50cca%3A9d2d0eb64d5c44529cece33fe2a46482?action=launch&silent=true",
     "wait-for-easy-anti-cheat": false,
     "create-black-window": true,
