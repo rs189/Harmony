@@ -78,11 +78,13 @@ Then copy the `.desktop` file created inside of `~/.local/share/applications`
 * Simplified installation process.
 * A GUI configuration tool with automatic `.json` and `.desktop` file creation.
 * ~~Live USB Host Device monitoring.~~
-* GPU power saving mode when the Harmony/Looking Glass window is closed.
+* Automatic power saving mode when disconnected.
 * ~~Automatic suspend after a period of inactivity.~~
 * ~~Automatic GPU binding and unbinding in the host.~~ (Can be done using your own setup with `client_command` and `client_undo_command`)
+* Custom clipboard synchronisation.
 * Discord Rich Presence.
-* Implementation for other software other than games.
+* Support for login or other prompt detection.
+* Support for other software other than games.
 
 # Licence
 
