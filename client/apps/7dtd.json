@@ -15,8 +15,8 @@
     ],
     "usb_devices": [
     ],
-    "command": "steam://rungameid/251570",
-    "wait-for-easy-anti-cheat": true,
+    "command": "steam://rungameid/251570/dialog",
+    "wait-for-easy-anti-cheat": false,
     "create-black-window": true,
     "monitor-process": true,
     "delay": 0,

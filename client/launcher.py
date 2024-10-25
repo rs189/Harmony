@@ -46,7 +46,7 @@ class HarmonyLauncherWindow(Gtk.ApplicationWindow):
         left_container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         left_container.set_margin_start(20)
         left_container.set_margin_top(15)
-        left_container.set_margin_bottom(15)
+        left_container.set_margin_bottom(10)
         content_box.pack_start(left_container, False, False, 0)
         
         image_path = os.path.join(current_path, 'apps', self.app_splash)
@@ -65,7 +65,7 @@ class HarmonyLauncherWindow(Gtk.ApplicationWindow):
         right_content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
         right_content.set_margin_top(15)
         right_content.set_margin_end(20)
-        right_content.set_margin_bottom(15)
+        right_content.set_margin_bottom(10)
         content_box.pack_start(right_content, True, True, 0)
         
         title_label = Gtk.Label()
@@ -180,7 +180,6 @@ class HarmonyLauncherWindow(Gtk.ApplicationWindow):
                 color: white;
                 border-radius: 4px;
                 border: none;
-                margin-bottom: 6px;
                 box-shadow: none;
                 text-shadow: none;
                 -gtk-icon-shadow: none;

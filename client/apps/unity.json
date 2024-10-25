@@ -1,0 +1,23 @@
+{
+    "vm": "win10-gpu-software",
+    "name": "Unity",
+    "splash": "unity.png",
+    "colour": "#ffffff",
+    "mainexe": "Unity Hub.exe",
+    "alwaysontop": false,
+    "exes": [
+        "Unity Hub.exe"
+    ],
+    "killexes": [
+    ],
+    "usb_devices": [
+    ],
+    "client_command": "",
+    "client_undo_command": "",
+    "command": "C:\\Program Files\\Unity Hub\\Unity Hub.exe",
+    "wait-for-easy-anti-cheat": false,
+    "create-black-window": false,
+    "monitor-process": true,
+    "delay": 0,
+    "timeout": 300
+}
