@@ -6,7 +6,8 @@
     "mainexe": "Unity Hub.exe",
     "alwaysontop": false,
     "exes": [
-        "Unity Hub.exe"
+        "Unity Hub.exe",
+        "Unity.exe"
     ],
     "killexes": [
     ],
