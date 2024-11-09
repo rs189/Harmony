@@ -21,6 +21,6 @@
     "monitor-process": true,
     "delay": 0,
     "terminate-on-disconnect": true,
-    "terminate-on-disconnect-timeout": 150,
+    "terminate-on-disconnect-timeout": 200,
     "timeout": 300
 }

@@ -13,7 +13,8 @@
         "audio:micDefault=allow",
         "spice:captureOnStart=no",
         "input:captureOnFocus=yes",
-        "input:grabKeyboard=no"
+        "input:grabKeyboard=no",
+        "egl:noSwapDamage=yes"
     ],
     "spice-port": 5905,
     "harmony-port": 5000

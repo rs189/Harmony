@@ -180,6 +180,7 @@ class HarmonyLauncherWindow(Gtk.ApplicationWindow):
                 color: white;
                 border-radius: 4px;
                 border: none;
+                margin-bottom: 1px;
                 box-shadow: none;
                 text-shadow: none;
                 -gtk-icon-shadow: none;

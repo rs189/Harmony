@@ -1,11 +1,26 @@
-# Harmony
+# ☯️ Harmony
  A looking-glass and libvirt integration for launching Windows applications with a native form factor.
 
-# This project is not affiliated with the official Looking Glass or libvirt projects. Any issues arising from using Harmony should not be reported to the Looking Glass or the libvirt teams.
+## 🚨 This project is not affiliated with the official Looking Glass or libvirt projects. Any issues arising from using Harmony should not be reported to the Looking Glass or the libvirt teams.
+
+## 🚨 It is recommended to have a separate VM and Windows install when using Harmony as it is not designed to be used outside this project's scope.
+
+## Demo
 
 [![Video](https://img.youtube.com/vi/MWZ3jt53io8/maxresdefault.jpg)](https://youtu.be/MWZ3jt53io8)
+Click on the image to view the video.
 
-# It is recommended to have a separate VM and Windows install when using Harmony as it is not designed to be used outside this project's scope.
+## Features
+
+* [ ] Simplified installation process.
+* [ ] Simplified GUI configuration process.
+* [x] USB host device binding and unbinding in the guest.
+* [ ] Power saving mode when disconnected.
+* [x] Suspend after a period of inactivity.
+* [x] GPU binding and unbinding in the host. (See `client_command` and `client_undo_command`)
+* [ ] Custom clipboard synchronisation.
+* [ ] Support for login or other prompt detection.
+* [x] Support for other software other than games.
 
 ## Requirements
 
@@ -41,6 +56,7 @@
         "Saitek PLC Saitek X52 PRO Flight Control System"
     ],
     "client_command": "",
+    "client_undo_command": "",
     "command": "steam://rungameid/1250410",
     "wait-for-easy-anti-cheat": false,
     "create-black-window": true,
@@ -72,19 +88,6 @@ Then copy the `.desktop` file created inside of `~/.local/share/applications`
 9. (Optional) Install Microsoft PowerToys - Keyboard Manager to remap the Alt+Tab or other buttons inside the Windows guest to allow for more seamless integration with the host.
 10. (Optional) Disable translucency effects in Windows.
 11. (Optional) Disable UAC prompts in Windows; otherwise, you will have to acknowledge the UAC prompt when the Harmony host tries to run an application.
-
-## TODO:
-
-* Simplified installation process.
-* A GUI configuration tool with automatic `.json` and `.desktop` file creation.
-* ~~Live USB Host Device monitoring.~~
-* Automatic power saving mode when disconnected.
-* ~~Automatic suspend after a period of inactivity.~~
-* ~~Automatic GPU binding and unbinding in the host.~~ (Can be done using your own setup with `client_command` and `client_undo_command`)
-* Custom clipboard synchronisation.
-* Discord Rich Presence.
-* Support for login or other prompt detection.
-* Support for other software other than games.
 
 # Licence
 

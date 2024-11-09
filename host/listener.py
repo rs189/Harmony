@@ -62,12 +62,23 @@ def keepalive_watcher():
     keepalive_timeout = harmony_config.get('keepalive_timeout', 60)
     global last_keepalive_time
     while True:
+        if last_keepalive_time == -1:
+            logger.log_to_file("Keepalive watcher hibernated.")
+            break
+        # Detect when user hibernates the PC by themselves
+        hibernate_delta = 7
+        if time.time() - last_keepalive_time > hibernate_delta:
+            last_keepalive_time = -1
+            logger.log_to_file("Keepalive watcher hibernated.")
+            break  
         time_since_last_keepalive = time.time() - last_keepalive_time
         if time_since_last_keepalive >= keepalive_timeout:
-            print("Timeout received, hibernating PC.")
+            last_keepalive_time = -1  # Reset keepalive time
+            logger.log_to_file("Timeout received, hibernating PC.")
             subprocess.run(["shutdown", "/h"])  # Hibernate the PC
             break  # Exit the loop after hibernation
-        print("Keepalive watcher alive.")
+            
+        logger.log_to_file("Keepalive watcher alive.")
         time.sleep(1)  # Check every second
 
 def disconnect_watcher(exes, timeout):
@@ -92,7 +103,7 @@ class HarmonyHostListener(Flask):
         @self.route('/execute', methods=['POST'])
         def execute_command():
             command = request.form.get('command')
-            print(f"Received command: {command}")
+            logger.log_to_file(f"Received command: {command}")
             if command:
                 # Inform the client that the command is about to run
                 response = f"Command '{command}' will be executed."
@@ -100,13 +111,15 @@ class HarmonyHostListener(Flask):
                 # Run the command in a separate thread, after a short delay
                 threading.Thread(target=run_command_after_delay, args=(command,)).start()
 
-                return response
+                logger.log_to_file('Sending response: ', response)
+                return response + ' Will be executed'
+            logger.log_to_file('Sending response: No command provided.')
             return 'No command provided.'
 
         @self.route('/cancel', methods=['POST'])
         def cancel_command():
             exes = request.form.get('exes')
-            print("Cancelling the command with exes: ", exes)
+            logger.log_to_file("Cancelling the command with exes: ", exes)
             # Cancel the command by killing the process
             common.kill_process('pythonw.exe')
             exe_list = shlex.split(exes)
@@ -120,13 +133,13 @@ class HarmonyHostListener(Flask):
             global disconnect_watcher_thread
             timeout = request.form.get('timeout')
             exes = request.form.get('exes')
-            print(f"Disconnecting with timeout: {timeout}, exes: {exes}")
+            logger.log_to_file(f"Disconnecting with timeout: {timeout}, exes: {exes}")
             with disconnect_thread_lock:
                 if not (disconnect_watcher_thread and disconnect_watcher_thread.is_alive()):
                     disconnect_watcher_thread = threading.Thread(target=disconnect_watcher, args=(exes, int(timeout)), daemon=True)
                     disconnect_watcher_thread.start()
                 else:
-                    print("Disconnect watcher thread is already running.")
+                    logger.log_to_file("Disconnect watcher thread is already running.")
                     # Wait for the existing thread to finish and then start a new one
                     disconnect_watcher_thread.join()
                     disconnect_watcher_thread = threading.Thread(target=disconnect_watcher, args=(exes, int(timeout)), daemon=True)
@@ -136,12 +149,12 @@ class HarmonyHostListener(Flask):
         @self.route('/stop', methods=['POST'])
         def stop_command():
             exes = request.form.get('exes')
-            print("Stopping the command with exes: ", exes)
+            logger.log_to_file("Stopping the command with exes: ", exes)
             # Stop the command by killing the process
             common.kill_process('pythonw.exe')
             exe_list = shlex.split(exes)
             for exe in exe_list:
-                print(f"Killing process: {exe}")
+                logger.log_to_file(f"Killing process: {exe}")
                 common.kill_process(exe)
             return 'Stopped'
 
@@ -154,7 +167,7 @@ class HarmonyHostListener(Flask):
             with thread_lock:
                 # Check if the watcher thread is alive
                 if not is_thread_alive(watcher_thread):
-                    print("Starting a new watcher thread.")
+                    logger.log_to_file("Starting a new watcher thread.")
                     # Create a new watcher thread if it doesn't exist or has stopped
                     watcher_thread = threading.Thread(target=keepalive_watcher, daemon=True)
                     watcher_thread.start()

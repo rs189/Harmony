@@ -207,6 +207,8 @@ class HarmonyHost():
                 if width > 321 and height > 241:
                     break
                 time.sleep(eac_interval)
+                if hwnd is None:
+                    break
 
         # Wait a little for the window to appear
         time.sleep(0.1)
@@ -298,8 +300,10 @@ class HarmonyHost():
                 command = f'start {args.app}'
             else:
                 command = args.app
-            logger.log_to_file(f"[HarmonyHost] [Info] Executing command: {args.mainexe}")
-            subprocess.Popen(command, shell=True, creationflags=subprocess.CREATE_NO_WINDOW)
+            logger.log_to_file(f"[HarmonyHost] [Info] Executing command: {command}")
+            # Do it twice in case as a workaround for it not launching for some reason with Steam
+            for i in range(2):
+                subprocess.Popen(command, shell=True, creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP)
 
         # Kill the processes specified
         if self.common.are_processes_running(args.killexes):

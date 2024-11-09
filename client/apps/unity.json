@@ -19,6 +19,6 @@
     "wait-for-easy-anti-cheat": false,
     "create-black-window": false,
     "monitor-process": true,
-    "delay": 0,
+    "delay": 3,
     "timeout": 300
 }

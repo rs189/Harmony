@@ -223,6 +223,14 @@ class HarmonyClient():
         try:
             response = self.common.requests_retry_session().post(url, data={'command': app_command}, timeout=10)
             logger.log_to_file(f'[HarmonyClient] [Info] Start app {app_name} response from server: ', response.text)
+            # If the response is empty, try again until max retries is reached
+            max_retries = 10
+            retries = 0
+            while not response.text and retries < max_retries:
+                response = self.common.requests_retry_session().post(url, data={'command': app_command}, timeout=10)
+                logger.log_to_file(f'[HarmonyClient] [Info] Retry start app {app_name} response from server: ', response.text)
+                retries += 1
+                time.sleep(1)
         except requests.exceptions.Timeout:
             logger.log_to_file(f'[HarmonyClient] [Error] Request timed out trying to start app {app_name}')
             sys.exit(1)

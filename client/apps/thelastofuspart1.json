@@ -1,11 +1,14 @@
 {
     "vm": "win10-games",
-    "name": "No Man's Sky",
-    "splash": "nomanssky.jpg",
-    "mainexe": "NMS.exe",
+    "name": "The Last of Us™ Part I",
+    "splash": "thelastofuspart1.jpg",
+    "colour": "#fbe08f",
+    "mainexe": "tlou-i.exe",
     "alwaysontop": true,
     "exes": [
-        "NMS.exe"
+        "launcher.exe",
+        "tlou-i.exe",
+        "tlou-i-l.exe"
     ],
     "killexes": [
         "explorer.exe"
@@ -14,10 +17,12 @@
     ],
     "client_command": "",
     "client_undo_command": "",
-    "command": "steam://rungameid/275850",
+    "command": "steam://rungameid/11355107311124217856",
     "wait-for-easy-anti-cheat": false,
     "create-black-window": true,
     "monitor-process": true,
     "delay": 1,
+    "terminate-on-disconnect": true,
+    "terminate-on-disconnect-timeout": 300,
     "timeout": 300
 }
